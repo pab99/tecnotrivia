@@ -26,43 +26,16 @@
             flex-direction: column;
         }
 
-        #seccion-login {
-            margin: auto;
-            max-width: 400px;
-            width: 100%;
-            padding: 20px;
-            background: white;
-            border: 3px solid var(--azul-oscuro);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            text-align: center;
-            margin-top: 50px;
-            margin-bottom: 30px;
-        }
-
-        #seccion-login h2 { color: var(--azul-oscuro); margin-bottom: 15px; }
-        #seccion-login input {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            border: 2px solid #ccc; border-radius: 8px; font-size: 1rem;
-        }
-        #seccion-login button {
-            width: 100%; padding: 12px; background: var(--azul-oscuro);
-            color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-
-        /* Fuerza a que el panel de control esté visible siempre */
         #panel-control {
-            display: block !important;
             flex: 1;
             padding: 20px;
             max-width: 1200px;
             width: 100%;
-            margin: 0 auto;
+            margin: 20px auto;
         }
 
-        /* Fuerza a que el menú superior de pestañas se renderice siempre */
         .menu-pestanas {
-            display: flex !important;
+            display: flex;
             gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid #ddd;
@@ -70,7 +43,7 @@
         }
 
         .btn-pestana {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             background: #e4e7eb;
             border-radius: 8px;
@@ -78,6 +51,9 @@
             font-weight: bold;
             color: #555;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-pestana.active {
@@ -112,12 +88,12 @@
         .form-grupo { margin-bottom: 15px; }
         .form-grupo label { display: block; font-weight: 600; margin-bottom: 5px; color: var(--azul-oscuro); }
         .form-grupo input, .form-grupo textarea {
-            width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem;
+            width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; font-family: inherit;
         }
         
         .btn-accion {
-            padding: 12px 24px; background: var(--azul-oscuro); color: white;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
+            padding: 14px 28px; background: var(--azul-oscuro); color: white;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;
         }
         .btn-accion:disabled { background: #94a3b8; cursor: not-allowed; }
 
@@ -130,20 +106,15 @@
 </head>
 <body>
 
-    <div id="seccion-login">
-        <h2>🔒 Acceso Auditoría Interna</h2>
-        <input type="password" id="pass-input" placeholder="Introduce la clave maestra...">
-        <button onclick="validarLogin()">Ingresar al Sistema</button>
-        <p id="login-error" style="color: var(--rojo-error); margin-top:10px; display:none; font-weight:bold;">Clave incorrecta</p>
-    </div>
-
     <div id="panel-control">
         
+        <!-- Menú de Pestañas Directo -->
         <div class="menu-pestanas">
             <button id="tab-metricas" class="btn-pestana active" onclick="cambiarPestaña('metricas')">📊 Métricas y Monitoreo</button>
             <button id="tab-ia" class="btn-pestana" onclick="cambiarPestaña('ia')">🤖 Generador de Temas IA</button>
         </div>
 
+        <!-- Pestaña 1: Métricas -->
         <div id="pestana-metricas" class="seccion-pestana">
             <div class="grid-metricas">
                 <div class="tarjeta bloque-numero">
@@ -181,6 +152,7 @@
             </div>
         </div>
 
+        <!-- Pestaña 2: Generador de preguntas -->
         <div id="pestana-ia" class="seccion-pestana" style="display: none;">
             <div class="tarjeta">
                 <h3>🤖 Configuración de Evento e Inyección de Preguntas</h3>
@@ -200,13 +172,13 @@
 
                 <div class="form-grupo">
                     <label>URL Pública del Servidor en Render (Sin barra final):</label>
-                    <input type="text" id="input-url-publica" value="https://trivia25demayo.onrender.com" placeholder="https://tu-app.onrender.com">
+                    <input type="text" id="input-url-publica" value="https://tecnotrivia.onrender.com" placeholder="https://tu-app.onrender.com">
                     <span id="url-actual-display" style="font-size:0.85rem; color:#0288d1; font-weight:bold;"></span>
                 </div>
 
                 <div class="form-grupo">
-                    <label>Prompt o Instrucciones para el Set de Preguntas:</label>
-                    <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: Generá un listado de 50 preguntas sobre la historia de SCANIA y camiones comerciales pesados..."></textarea>
+                    <label>Tema para generar las 50 preguntas:</label>
+                    <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: la historia de SCANIA y camiones comerciales pesados..."></textarea>
                 </div>
 
                 <button class="btn-accion" id="btn-generar" onclick="simularGeneracionIA()">Generar Trivia Completa</button>
@@ -227,15 +199,132 @@
         const socket = io();
         let _preguntasGeneradas = null;
 
-        // NUEVA CONTRASEÑA SOLICITADA
-        const CLAVE_MAESTRA = "tecnoincas2026";
+        function cambiarPestaña(pestana) {
+            document.getElementById('pestana-metricas').style.display = pestana === 'metricas' ? 'block' : 'none';
+            document.getElementById('pestana-ia').style.display = pestana === 'ia' ? 'block' : 'none';
 
-        function validarLogin() {
-            const input = document.getElementById('pass-input').value;
-            if (input === CLAVE_MAESTRA) {
-                document.getElementById('seccion-login').style.display = 'none';
-                document.getElementById('login-error').style.display = 'none';
-                document.getElementById('panel-control').style.display = 'block';
-                cambiarPestaña('metricas');
-            } else {
-                document.getElementById('login-
+            document.getElementById('tab-metricas').className = pestana === 'metricas' ? 'btn-pestana active' : 'btn-pestana';
+            document.getElementById('tab-ia').className = pestana === 'ia' ? 'btn-pestana active' : 'btn-pestana';
+        }
+
+        // Conexión en tiempo real para las métricas
+        socket.emit('pedir_ranking_dashboard');
+        setInterval(() => {
+            socket.emit('pedir_ranking_dashboard');
+        }, 4000);
+
+        socket.on('data_ranking_dashboard', (listaJugadores) => {
+            document.getElementById('m-registrados').textContent = listaJugadores.length;
+            
+            let maxPuntos = 0;
+            let conectados = 0;
+            let html = "";
+
+            listaJugadores.forEach((j, index) => {
+                if (j.puntos > maxPuntos) maxPuntos = j.puntos;
+                if (j.vidas > 0 && j.respondidas && j.respondidas.length < 10) conectados++;
+
+                html += `<tr>
+                    <td><b>#${index + 1}</b></td>
+                    <td>@${j.username}</td>
+                    <td>${j.puntos} Pts</td>
+                    <td>${j.puntosRondaActual || 0} Pts</td>
+                    <td>${'❤️'.repeat(Math.max(0, j.vidas)) || '💀 Eliminado'}</td>
+                </tr>`;
+            });
+
+            document.getElementById('m-maxpuntos').textContent = maxPuntos + " Pts";
+            document.getElementById('m-conectados').textContent = conectados;
+            if(listaJugadores.length > 0) {
+                document.getElementById('tabla-usuarios-body').innerHTML = html;
+            }
+        });
+
+        async function cargarConfigActual() {
+            try {
+                const r = await fetch('/contenido.json');
+                const data = await r.json();
+                if(data && data.config) {
+                    document.getElementById('input-evento-nombre').value = data.evento.nombre || '';
+                    document.getElementById('input-evento-subtitulo').value = data.evento.subtitulo || '';
+                    document.getElementById('input-url-publica').value = data.config.url_publica || '';
+                    document.getElementById('url-actual-display').textContent = 'URL activa detectada: ' + (data.config.url_publica || '—');
+                }
+            } catch(e){}
+        }
+
+        function simularGeneracionIA() {
+            const prompt = document.getElementById('input-prompt-ia').value;
+            if(!prompt.trim()) return alert("Por favor escribe una instrucción para la IA.");
+
+            document.getElementById('btn-generar').disabled = true;
+            document.getElementById('btn-generar').textContent = "Procesando Set con IA...";
+
+            setTimeout(() => {
+                _preguntasGeneradas = [];
+                for(let i=1; i<=50; i++) {
+                    _preguntasGeneradas.push({
+                        id: i,
+                        pregunta: `Pregunta Automatizada N°${i} sobre: ${prompt.substring(0, 30)}...`,
+                        correcta: "Opción Correcta A",
+                        incorrectas: ["Opción Incorrecta B", "Opción Incorrecta C", "Opción Incorrecta D"]
+                    });
+                }
+
+                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0,3), null, 2) + "\n... [47 preguntas más estructuradas jerárquicamente]";
+                document.getElementById('preview-preguntas').style.display = 'block';
+                document.getElementById('btn-generar').disabled = false;
+                document.getElementById('btn-generar').textContent = "Generar Trivia Completa";
+            }, 1000);
+        }
+
+        async function aplicarTemaEnServidor() {
+            if(!_preguntasGeneradas) return;
+
+            const nombre = document.getElementById('input-evento-nombre').value;
+            const subtitulo = document.getElementById('input-evento-subtitulo').value;
+            const url = document.getElementById('input-url-publica').value;
+
+            document.getElementById('btn-aplicar-tema').disabled = true;
+            mostrarEstado('Sincronizando y subiendo datos a MongoDB Atlas...', 'ok');
+
+            try {
+                const resp = await fetch('/admin/cambiar-tema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        preguntas:       _preguntasGeneradas,
+                        evento_nombre:   nombre,
+                        evento_subtitulo: subtitulo,
+                        url_publica:     url
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (result.ok) {
+                    mostrarEstado('🎉 ' + result.mensaje, 'ok');
+                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + url;
+                    _preguntasGeneradas = null;
+                    document.getElementById('preview-preguntas').style.display = 'none';
+                } else {
+                    mostrarEstado('Error del servidor: ' + result.error, 'error');
+                    document.getElementById('btn-aplicar-tema').disabled = false;
+                }
+            } catch (err) {
+                mostrarEstado('No se pudo conectar con el servidor: ' + err.message, 'error');
+                document.getElementById('btn-aplicar-tema').disabled = false;
+            }
+        }
+
+        function mostrarEstado(msg, tipo) {
+            const el = document.getElementById('estado-ia');
+            el.textContent = msg;
+            el.className = 'estado-ia ' + tipo;
+            el.style.display = 'block';
+        }
+
+        cargarConfigActual();
+    </script>
+</body>
+</html>
