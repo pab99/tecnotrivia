@@ -1,0 +1,252 @@
+[
+  {
+    "id": 1,
+    "pregunta": "¿En qué año se produjo la Revolución de Mayo?",
+    "dato": "1810"
+  },
+  {
+    "id": 2,
+    "pregunta": "¿Quién era el virrey del Río de la Plata durante la Revolución de Mayo?",
+    "dato": "Baltasar Hidalgo de Cisneros"
+  },
+  {
+    "id": 3,
+    "pregunta": "¿Dónde se reunían secretamente los criollos a conspirar antes de mayo de 1810?",
+    "dato": "En la Jabonería de Vieytes"
+  },
+  {
+    "id": 4,
+    "pregunta": "¿Qué día de la Semana de Mayo se convocó al Cabildo Abierto crucial?",
+    "dato": "22 de mayo"
+  },
+  {
+    "id": 5,
+    "pregunta": "¿Quiénes son tradicionalmente recordados por repartir las cintas patrias?",
+    "dato": "French y Beruti"
+  },
+  {
+    "id": 6,
+    "pregunta": "¿Quién fue el presidente de la Primera Junta de Gobierno?",
+    "dato": "Cornelio Saavedra"
+  },
+  {
+    "id": 7,
+    "pregunta": "¿Quiénes eran los dos secretarios de la Primera Junta?",
+    "dato": "Mariano Moreno y Juan José Paso"
+  },
+  {
+    "id": 8,
+    "pregunta": "¿Qué periódico fundó Mariano Moreno en junio de 1810?",
+    "dato": "La Gazeta de Buenos Ayres"
+  },
+  {
+    "id": 9,
+    "pregunta": "¿Qué profesión tenía Manuel Belgrano originalmente?",
+    "dato": "Abogado"
+  },
+  {
+    "id": 10,
+    "pregunta": "¿En qué ciudad creó Belgrano la bandera argentina en 1812?",
+    "dato": "Rosario"
+  },
+  {
+    "id": 11,
+    "pregunta": "¿A orillas de qué río se izó por primera vez la bandera nacional?",
+    "dato": "Río Paraná"
+  },
+  {
+    "id": 12,
+    "pregunta": "¿Qué estrategia militar ordenó Belgrano en 1812 dejando Jujuy desierto?",
+    "dato": "El Éxodo Jujeño"
+  },
+  {
+    "id": 13,
+    "pregunta": "¿Dónde y cuándo se declaró la Independencia Argentina?",
+    "dato": "Tucumán, 9 de Julio de 1816"
+  },
+  {
+    "id": 14,
+    "pregunta": "¿Quién era el dueño de la casa donde se juró la Independencia en Tucumán?",
+    "dato": "Francisca Bazán de Laguna"
+  },
+  {
+    "id": 15,
+    "pregunta": "¿Qué cargo político ejercía José de San Martín en Mendoza antes de cruzar los Andes?",
+    "dato": "Gobernador de Cuyo"
+  },
+  {
+    "id": 16,
+    "pregunta": "¿En qué año inició San Martín el Cruce de los Andes?",
+    "dato": "1817"
+  },
+  {
+    "id": 17,
+    "pregunta": "¿Cuál fue la primera batalla ganada por San Martín en suelo chileno?",
+    "dato": "Batalla de Chacabuco"
+  },
+  {
+    "id": 18,
+    "pregunta": "¿Cuál fue el único combate de San Martín en territorio actual argentino?",
+    "dato": "Batalla de San Lorenzo"
+  },
+  {
+    "id": 19,
+    "pregunta": "¿Quién lideró la guerra de guerrillas en el norte protegiendo la frontera salteña?",
+    "dato": "Martín Miguel de Güemes"
+  },
+  {
+    "id": 20,
+    "pregunta": "¿Cómo se llamaba la milicia gaucha de Güemes?",
+    "dato": "Los Infernales"
+  },
+  {
+    "id": 21,
+    "pregunta": "¿Qué mujer luchó en el Alto Perú y recibió el rango de Teniente Coronel?",
+    "dato": "Juana Azurduy"
+  },
+  {
+    "id": 22,
+    "pregunta": "¿Quién escribió la letra de nuestro Himno Nacional Argentino?",
+    "dato": "Vicente López y Planes"
+  },
+  {
+    "id": 23,
+    "pregunta": "¿Quién compuso la música del Himno Nacional Argentino?",
+    "dato": "Blas Parera"
+  },
+  {
+    "id": 24,
+    "pregunta": "¿En qué casa se cantó el Himno Nacional por primera vez?",
+    "dato": "De Mariquita Sánchez de Thompson"
+  },
+  {
+    "id": 25,
+    "pregunta": "¿Qué asamblea soberana abolió la esclavitud (libertad de vientres) e impuso el escudo nacional?",
+    "dato": "La Asamblea del Año XIII"
+  },
+  {
+    "id": 26,
+    "pregunta": "¿Cómo se llamaba la moneda colonial española que circulaba antes de la independencia?",
+    "dato": "Real"
+  },
+  {
+    "id": 27,
+    "pregunta": "¿Qué potencias europeas invadieron Buenos Aires en 1806 y 1807?",
+    "dato": "Gran Bretaña"
+  },
+  {
+    "id": 28,
+    "pregunta": "¿Qué vecino defendió la ciudad arrojando aceite y agua hirviendo en las invasiones inglesas?",
+    "dato": "Manuela Pedraza"
+  },
+  {
+    "id": 29,
+    "pregunta": "¿Qué militar de origen francés lideró la Reconquista de Buenos Aires en 1806?",
+    "dato": "Santiago de Liniers"
+  },
+  {
+    "id": 30,
+    "pregunta": "¿A qué facción europea respondían los realistas contra los que luchaban los criollos?",
+    "dato": "A la Corona Española"
+  },
+  {
+    "id": 31,
+    "pregunta": "¿Qué órgano de gobierno reemplazó a la Primera Junta a finales de 1810 sumando diputados provinciales?",
+    "dato": "La Junta Grande"
+  },
+  {
+    "id": 32,
+    "pregunta": "¿Qué forma de gobierno ejecutivo de tres miembros gobernó entre 1811 y 1814?",
+    "dato": "El Triunvirato"
+  },
+  {
+    "id": 33,
+    "pregunta": "¿Cuál era el título del gobernante unipersonal creado por la Asamblea del Año XIII?",
+    "dato": "Director Supremo"
+  },
+  {
+    "id": 34,
+    "pregunta": "¿Quién fue el primer Director Supremo de las Provincias Unidas del Río de la Plata?",
+    "dato": "Gervasio Antonio de Posadas"
+  },
+  {
+    "id": 35,
+    "pregunta": "¿Qué militar criollo apodado 'El Orador de la Revolución' lideró la campaña al Alto Perú?",
+    "dato": "Juan José Castelli"
+  },
+  {
+    "id": 36,
+    "pregunta": "¿Cuál era el nombre del fuerte que se ubicaba donde hoy está la Casa Rosada?",
+    "dato": "Real Fortaleza de San Juan Baltasar de Austria"
+  },
+  {
+    "id": 37,
+    "pregunta": "¿Qué medio de transporte tirado por caballos era el más rápido para largas distancias en 1810?",
+    "dato": "La galera"
+  },
+  {
+    "id": 38,
+    "pregunta": "¿Cuánto tiempo aproximado tardaba una carreta de Buenos Aires a Mendoza en la época colonial?",
+    "dato": "Un mes"
+  },
+  {
+    "id": 39,
+    "pregunta": "¿Cómo iluminaban las calles principales de Buenos Aires las noches de 1810?",
+    "dato": "Con velas de sebo en faroles"
+  },
+  {
+    "id": 40,
+    "pregunta": "¿Qué vendedor ambulante colonial solía cantar 'Agua fresquita para tomar'?",
+    "dato": "El aguatero"
+  },
+  {
+    "id": 41,
+    "pregunta": "¿Qué personaje colonial anunciaba las horas y el estado del tiempo por la noche?",
+    "dato": "El sereno"
+  },
+  {
+    "id": 42,
+    "pregunta": "¿Qué construcción dividía la actual Plaza de Mayo en dos sectores en la época colonial?",
+    "dato": "La Vieja Recova"
+  },
+  {
+    "id": 43,
+    "pregunta": "¿Cuál fue el primer monumento patrio construido en Buenos Aires en 1811?",
+    "dato": "La Pirámide de Mayo"
+  },
+  {
+    "id": 44,
+    "pregunta": "¿Qué bebida caliente era la más popular en las tertulias y hogares rioplatenses?",
+    "dato": "El Mate"
+  },
+  {
+    "id": 45,
+    "pregunta": "¿En qué famosa reunión de 1822 se encontraron a solas San Martín y Simón Bolívar?",
+    "dato": "La Entrevista de Guayaquil"
+  },
+  {
+    "id": 46,
+    "pregunta": "¿Cómo se llamaba la esposa de José de San Martín?",
+    "dato": "María de los Remedios de Escalada"
+  },
+  {
+    "id": 47,
+    "pregunta": "¿Qué regimiento militar de caballería de élite fundó San Martín en 1812?",
+    "dato": "Regimiento de Granaderos a Caballo"
+  },
+  {
+    "id": 48,
+    "pregunta": "¿A qué monarca cautivo de Napoleón juraban lealtad de fachada los miembros de la Primera Junta?",
+    "dato": "Fernando VII"
+  },
+  {
+    "id": 49,
+    "pregunta": "¿Qué tratado de 1820 firmado por gobernadores del litoral puso fin al Directorio Supremo?",
+    "dato": "Tratado del Pilar"
+  },
+  {
+    "id": 50,
+    "pregunta": "¿Quién fue el vocal de la Primera Junta que además era un sacerdote católico?",
+    "dato": "Manuel Alberti"
+  }
+]

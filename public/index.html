@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --celeste: #4fc3f7;
+            --celeste-oscuro: #0288d1;
+            --azul-oscuro: #0d2c54;
+            --azul-medio: #1a4a7a;
+            --amarillo: #fdd835;
+            --amarillo-hover: #f9a825;
+            --rojo: #ef5350;
+            --rojo-oscuro: #c62828;
+            --verde: #43a047;
+            --verde-claro: #66bb6a;
+            --blanco: #ffffff;
+            --gris-claro: #f0f4f8;
+            --gris-texto: #546e7a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: linear-gradient(160deg, #0d2c54 0%, #1a4a7a 45%, #0d2c54 100%);
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fondo decorativo con estrellas/puntos */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 15% 20%, rgba(253,216,53,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 85% 80%, rgba(79,195,247,0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .contenedor-movil {
+            padding: 16px 16px 8px;
+            max-width: 460px;
+            margin: auto;
+            flex: 1;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ─── HEADER SUPERIOR ─── */
+        .app-header {
+            text-align: center;
+            padding: 18px 0 12px;
+        }
+        .app-header .sol {
+            font-size: 2.8rem;
+            display: block;
+            animation: girar 25s linear infinite;
+            line-height: 1;
+        }
+        @keyframes girar { to { transform: rotate(360deg); } }
+
+        .app-header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.6rem;
+            color: var(--amarillo);
+            letter-spacing: 2px;
+            line-height: 1;
+            margin-top: 6px;
+            text-shadow: 0 2px 12px rgba(253,216,53,0.3);
+        }
+        .app-header .subtitulo {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* ─── TARJETA BASE ─── */
+        .tarjeta {
+            background: rgba(255,255,255,0.97);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+            margin-top: 12px;
+        }
+
+        .pantalla { display: none; }
+        .pantalla.activa { display: block; }
+
+        /* ─── PANTALLA LOGIN ─── */
+        .login-emojis {
+            font-size: 1.6rem;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+        .login-titulo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--azul-oscuro);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .login-subtitulo {
+            font-size: 0.85rem;
+            color: var(--gris-texto);
+            text-align: center;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .input-ig {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            width: 100%;
+            padding: 12px 16px;
+            text-align: center;
+            border: 2.5px solid var(--celeste-oscuro);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #e3f2fd;
+            color: var(--azul-oscuro);
+            letter-spacing: 1px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-ig:focus { border-color: var(--amarillo); }
+
+        /* ─── TECLADO VIRTUAL ─── */
+        .teclado {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            background: var(--gris-claro);
+            padding: 10px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+        }
+        .teclado button {
+            padding: 13px 0;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            background: var(--blanco);
+            border: 1.5px solid #cfd8dc;
+            border-radius: 8px;
+            color: var(--azul-oscuro);
+            box-shadow: 0 2px 0 #b0bec5;
+            transition: all 0.08s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+        .teclado button:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #b0bec5;
+        }
+        .teclado .btn-ancho {
+            grid-column: span 2;
+            background: #ffebee;
+            color: var(--rojo-oscuro);
+            border-color: #ef9a9a;
+            box-shadow: 0 2px 0 #ef9a9a;
+        }
+        .teclado .btn-action {
+            grid-column: span 2;
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            border-color: var(--azul-medio);
+            box-shadow: 0 2px 0 #071a33;
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+        }
+
+        /* ─── INSTRUCCIONES ─── */
+        .instrucciones {
+            background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
+            border-left: 4px solid var(--celeste-oscuro);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.83rem;
+            color: var(--gris-texto);
+            line-height: 1.5;
+        }
+        .instrucciones strong { color: var(--azul-oscuro); }
+
+        /* ─── PANTALLA JUEGO ─── */
+        .header-juego {
+            background: var(--azul-oscuro);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .hj-usuario {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--celeste);
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .hj-pregunta {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            color: var(--amarillo);
+            letter-spacing: 1px;
+        }
+        .hj-vidas {
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        /* ─── TIMER ─── */
+        .contenedor-timer {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+        }
+        .barra-timer {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--celeste-oscuro), var(--celeste));
+            border-radius: 6px;
+            transition: width 0.1s linear, background 0.5s;
+        }
+        .barra-timer.urgente {
+            background: linear-gradient(90deg, var(--rojo-oscuro), var(--rojo));
+        }
+
+        /* ─── PUNTOS Y COMBO ─── */
+        .barra-estado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            min-height: 28px;
+        }
+        .txt-puntos {
+            font-size: 1rem;
+            font-weight: 900;
+            color: var(--azul-oscuro);
+            background: #e3f2fd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1.5px solid var(--celeste);
+        }
+        .txt-combo {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #e65100;
+            text-align: right;
+            animation: pulso 0.4s ease;
+        }
+        @keyframes pulso {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* ─── PREGUNTA ─── */
+        .pregunta-texto {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--azul-oscuro);
+            line-height: 1.45;
+            margin-bottom: 16px;
+            min-height: 60px;
+        }
+
+        /* ─── OPCIONES ─── */
+        .opcion-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--azul-oscuro);
+            background: var(--blanco);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        .opcion-btn::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+            background: var(--amarillo);
+            border-radius: 12px 0 0 12px;
+            transition: width 0.15s;
+        }
+        .opcion-btn:not([disabled]):hover {
+            border-color: var(--amarillo);
+            background: #fffde7;
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(253,216,53,0.25);
+        }
+        .opcion-btn:active { transform: scale(0.99); }
+
+        .opcion-btn.correcta-anim {
+            background: #e8f5e9 !important;
+            border-color: var(--verde) !important;
+            color: var(--verde) !important;
+            box-shadow: 0 4px 16px rgba(67,160,71,0.3) !important;
+        }
+        .opcion-btn.correcta-anim::before { background: var(--verde); width: 100%; opacity: 0.1; }
+
+        .opcion-btn.incorrecta-anim {
+            background: #ffebee !important;
+            border-color: var(--rojo) !important;
+            color: var(--rojo-oscuro) !important;
+            box-shadow: 0 4px 16px rgba(239,83,80,0.2) !important;
+        }
+        .opcion-btn.incorrecta-anim::before { background: var(--rojo); width: 100%; opacity: 0.1; }
+
+        .opcion-btn[disabled] { cursor: not-allowed; opacity: 0.65; }
+
+        /* ─── PANTALLA FINAL ─── */
+        .fin-header {
+            text-align: center;
+            padding: 8px 0 16px;
+        }
+        .fin-icono {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .fin-titulo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            color: var(--azul-oscuro);
+            line-height: 1.1;
+        }
+        .fin-mensaje {
+            font-size: 0.9rem;
+            color: var(--gris-texto);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .fin-stats {
+            background: var(--gris-claro);
+            border-radius: 14px;
+            padding: 16px;
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .stat-bloque {
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--gris-texto);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-valor {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem;
+            color: var(--azul-oscuro);
+            line-height: 1;
+            margin-top: 2px;
+        }
+        .stat-valor.verde { color: var(--verde); }
+        .stat-divider {
+            width: 1px;
+            height: 50px;
+            background: #cfd8dc;
+        }
+
+        .badge-puesto {
+            display: inline-block;
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            padding: 8px 22px;
+            border-radius: 30px;
+            margin-bottom: 16px;
+            border: 2px solid var(--amarillo);
+        }
+
+        .btn-reiniciar {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--blanco);
+            background: linear-gradient(135deg, var(--azul-medio), var(--azul-oscuro));
+            border: none;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 14px rgba(13,44,84,0.4);
+            transition: all 0.2s;
+        }
+        .btn-reiniciar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13,44,84,0.5);
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            text-align: center;
+            padding: 14px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .logo-tecnoincas {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, var(--amarillo) 0deg 30deg, #c69c00 30deg 60deg);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            display: inline-block;
+            position: relative;
+        }
+        .logo-tecnoincas::after {
+            content: '';
+            position: absolute;
+            width: 5px; height: 5px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-movil">
+
+        <!-- HEADER -->
+        <div class="app-header">
+            <span class="sol" id="hdr-sol">☀️</span>
+            <h1 id="hdr-titulo">Gran Trivia de Mayo</h1>
+            <div class="subtitulo" id="hdr-subtitulo">Revolución de Mayo</div>
+        </div>
+
+        <!-- ── PANTALLA LOGIN ── -->
+        <div id="pantalla-login" class="pantalla activa tarjeta">
+            <div class="login-emojis" id="login-emojis">🇦🇷 🏛️ ☀️ 🇦🇷</div>
+            <h2 class="login-titulo" id="login-titulo">¡Gran Trivia de Mayo!</h2>
+            <p class="login-subtitulo" id="login-subtitulo">Ingresá tu usuario de Instagram para aparecer en la pantalla gigante</p>
+
+            <input type="text" id="username-display" class="input-ig" placeholder="@tu_usuario" readonly>
+
+            <div class="teclado" id="teclado-virtual"></div>
+
+            <div class="instrucciones">
+                💡 <strong id="inst-titulo">¿Cómo jugar?</strong>
+                <span id="inst-texto"> Respondé 10 preguntas lo más rápido posible. Si te equivocás, tenés una segunda chance. El tiempo también suma puntos... ¡Al final ves tu posición en el ranking del evento!</span>
+            </div>
+        </div>
+
+        <!-- ── PANTALLA JUEGO ── -->
+        <div id="pantalla-juego" class="pantalla tarjeta">
+            <div class="header-juego">
+                <span class="hj-usuario" id="txt-usuario">@-</span>
+                <span class="hj-pregunta" id="txt-pregunta-num">PREGUNTA 1/10</span>
+                <span class="hj-vidas" id="txt-vidas">❤️❤️❤️</span>
+            </div>
+
+            <div class="contenedor-timer">
+                <div id="mi-barra" class="barra-timer"></div>
+            </div>
+
+            <div class="barra-estado">
+                <span class="txt-puntos" id="txt-puntos">Pts: 0</span>
+                <span class="txt-combo" id="txt-combo"></span>
+            </div>
+
+            <div class="pregunta-texto" id="pregunta-titulo">Cargando pregunta...</div>
+            <div id="contenedor-opciones"></div>
+        </div>
+
+        <!-- ── PANTALLA FINAL ── -->
+        <div id="pantalla-fin" class="pantalla tarjeta">
+            <div class="fin-header">
+                <span class="fin-icono" id="fin-icono">🏁</span>
+                <div class="fin-titulo" id="fin-titulo">FIN DE LA PARTIDA</div>
+                <p class="fin-mensaje" id="fin-mensaje"></p>
+            </div>
+
+            <div class="fin-stats">
+                <div class="stat-bloque">
+                    <div class="stat-label" id="lbl-puntaje">Puntaje</div>
+                    <div class="stat-valor verde" id="fin-puntos">0</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-bloque">
+                    <div class="stat-label" id="lbl-puesto">Puesto</div>
+                    <div class="stat-valor" id="fin-puesto">#--</div>
+                </div>
+            </div>
+
+            <a id="btn-reiniciar" href="#" class="btn-reiniciar" onclick="playSound('click')">
+                🔄 Volver a Jugar
+            </a>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="logo-tecnoincas"></div>
+        <span id="footer-texto">(R) Tecnoincas.com.ar</span>
+    </footer>
+
+    <script>
+        // ── CARGAR CONTENIDO DESDE JSON ──
+        fetch('/contenido.json')
+            .then(r => r.json())
+            .then(c => {
+                // Header
+                document.getElementById('hdr-sol').textContent       = c.evento.emoji_principal;
+                document.getElementById('hdr-titulo').textContent    = c.evento.nombre;
+                document.getElementById('hdr-subtitulo').textContent = c.evento.subtitulo;
+                document.title = c.evento.nombre + ' 🇦🇷';
+
+                // Login
+                document.getElementById('login-emojis').textContent   = c.evento.emojis_header;
+                document.getElementById('login-titulo').textContent    = c.login.titulo;
+                document.getElementById('login-subtitulo').textContent = c.login.subtitulo;
+                document.getElementById('username-display').placeholder = c.login.placeholder_input;
+                document.getElementById('inst-titulo').textContent     = c.login.instrucciones_titulo;
+                document.getElementById('inst-texto').textContent      = ' ' + c.login.instrucciones_texto;
+                if (btnJugarRef) btnJugarRef.innerText = c.login.btn_ingresar;
+
+                // Footer
+                document.getElementById('footer-texto').textContent = c.evento.footer;
+
+                // Botón reiniciar
+                document.getElementById('btn-reiniciar').href = c.config.url_publica;
+                document.getElementById('btn-reiniciar').textContent = c.resultados.btn_reiniciar;
+
+                // Labels resultados
+                document.getElementById('lbl-puntaje').textContent = c.resultados.label_puntaje.replace(':','');
+                document.getElementById('lbl-puesto').textContent  = c.resultados.label_puesto;
+
+                // Guardar ref para uso en JS
+                window._contenido = c;
+            })
+            .catch(() => { window._contenido = null; });
+
+        // ── MECÁNICA DEL JUEGO (sin cambios) ──
+        const socket = io();
+        let username = "";
+        let preguntaActual = null;
+        let intentoActual = 1;
+        let tiempoInicio = 0;
+        let puntosLocales = 0;
+        let timerInterval = null;
+        const TIEMPO_LIMITE = 15;
+        let wakeLock = null;
+        let btnJugarRef = null;
+
+        async function activarMantenerPantallaEncendida() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {}
+        }
+
+        // AudioContext compartido — se crea una sola vez en el primer gesto del usuario
+        let _audioCtx = null;
+        function getAudioCtx() {
+            if (!_audioCtx) {
+                _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // En móvil el contexto puede quedar en 'suspended' hasta un gesto
+            if (_audioCtx.state === 'suspended') _audioCtx.resume();
+            return _audioCtx;
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(500, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.04);
+                } else if (type === 'success') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.06);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.12);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.18);
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                    osc.start(); osc.stop(ctx.currentTime + 0.35);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(70, ctx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.start(); osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const keys = [
+                '1','2','3','4','5','6','7','8','9','0',
+                'q','w','e','r','t','y','u','i','o','p',
+                'a','s','d','f','g','h','j','k','l','_',
+                'z','x','c','v','b','n','m','.','-','@'
+            ];
+            const teclado = document.getElementById('teclado-virtual');
+
+            if (teclado) {
+                // Primer toque en cualquier tecla desbloquea el AudioContext en móvil
+                teclado.addEventListener('touchstart', () => getAudioCtx(), { once: true, passive: true });
+
+                keys.forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.innerText = key;
+                    btn.onclick = () => {
+                        playSound('click');
+                        if (username.length < 20) {
+                            username += key;
+                            document.getElementById('username-display').value = username;
+                        }
+                    };
+                    teclado.appendChild(btn);
+                });
+
+                const btnBorrar = document.createElement('button');
+                btnBorrar.innerText = '⌫';
+                btnBorrar.className = 'btn-ancho';
+                btnBorrar.onclick = () => {
+                    playSound('click');
+                    username = username.slice(0, -1);
+                    document.getElementById('username-display').value = username;
+                };
+                teclado.appendChild(btnBorrar);
+
+                const btnJugar = document.createElement('button');
+                btnJugar.innerText = 'INGRESAR';
+                btnJugar.className = 'btn-action';
+                btnJugarRef = btnJugar;
+                btnJugar.onclick = () => {
+                    if (username.trim().length > 2) {
+                        playSound('success');
+                        document.getElementById('txt-usuario').innerText = "@" + username.replace('@','');
+                        activarMantenerPantallaEncendida();
+                        socket.emit('join_game', username);
+                        cambiarPantalla('pantalla-juego');
+                        socket.emit('get_pregunta');
+                    } else {
+                        alert('Ingresá tu usuario de Instagram.');
+                    }
+                };
+                teclado.appendChild(btnJugar);
+            }
+        });
+
+        function cambiarPantalla(id) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+            const target = document.getElementById(id);
+            if (target) target.classList.add('activa');
+        }
+
+        function iniciarTimer() {
+            clearInterval(timerInterval);
+            const barra = document.getElementById('mi-barra');
+            if (!barra) return;
+            let tiempoRestante = TIEMPO_LIMITE;
+            barra.style.width = "100%";
+            barra.classList.remove('urgente');
+
+            timerInterval = setInterval(() => {
+                tiempoRestante -= 0.1;
+                let porcentaje = (tiempoRestante / TIEMPO_LIMITE) * 100;
+                barra.style.width = porcentaje + "%";
+                if (tiempoRestante <= 4) barra.classList.add('urgente');
+                if (tiempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    procesarTiempoAgotado();
+                }
+            }, 100);
+        }
+
+        function procesarTiempoAgotado() {
+            document.querySelectorAll('.opcion-btn').forEach(b => b.disabled = true);
+            playSound('fail');
+            socket.emit('enviar_respuesta', {
+                preguntaId: preguntaActual.id,
+                respuesta: "__TIEMPO_AGOTADO__",
+                intento: intentoActual,
+                tiempoEmpleado: TIEMPO_LIMITE
+            });
+        }
+
+        socket.on('pregunta_data', (data) => {
+            preguntaActual = data;
+            intentoActual = 1;
+            tiempoInicio = Date.now();
+
+            document.getElementById('txt-pregunta-num').innerText = `PREGUNTA ${data.numeroPregunta}/10`;
+            document.getElementById('pregunta-titulo').innerText = data.pregunta;
+
+            const contenedor = document.getElementById('contenedor-opciones');
+            if (contenedor) {
+                contenedor.innerHTML = '';
+                data.opciones.forEach(opcion => {
+                    const btn = document.createElement('button');
+                    btn.className = 'opcion-btn';
+                    btn.innerText = opcion;
+                    btn.onclick = () => responder(opcion, btn);
+                    contenedor.appendChild(btn);
+                });
+            }
+            iniciarTimer();
+        });
+
+        function responder(opcionSeleccionada, boton) {
+            clearInterval(timerInterval);
+            const tiempoEmpleado = (Date.now() - tiempoInicio) / 1000;
+            document.querySelectorAll('.opcion-btn').forEach(b => b.disabled = true);
+            boton.id = "btn-evaluando";
+
+            // Feedback inmediato: sonido + color de selección SIN esperar al servidor
+            playSound('click');
+            boton.style.background = '#e3f2fd';
+            boton.style.borderColor = '#90caf9';
+
+            socket.emit('enviar_respuesta', {
+                preguntaId: preguntaActual.id,
+                respuesta: opcionSeleccionada,
+                intento: intentoActual,
+                tiempoEmpleado: tiempoEmpleado
+            });
+        }
+
+        socket.on('resultado_respuesta', (res) => {
+            clearInterval(timerInterval);
+            const btnPresionado = document.getElementById('btn-evaluando');
+
+            // Limpiar el color de selección optimista antes de aplicar el resultado real
+            if (btnPresionado) {
+                btnPresionado.style.background = '';
+                btnPresionado.style.borderColor = '';
+            }
+
+            if (res.correcta) {
+                playSound('success');
+                if (btnPresionado) btnPresionado.classList.add('correcta-anim');
+
+                puntosLocales = res.puntos;
+                document.getElementById('txt-puntos').innerText = `Pts: ${puntosLocales}`;
+
+                if ([3, 6, 9, 12].includes(res.combo)) {
+                    document.getElementById('txt-combo').innerText = `🔥 COMBO x${res.combo === 3 ? 2 : res.combo === 6 ? 4 : res.combo === 9 ? 6 : 10} 🔥`;
+                } else {
+                    document.getElementById('txt-combo').innerText = `Racha: ${res.combo} seguidas`;
+                }
+
+                setTimeout(() => {
+                    if (btnPresionado) btnPresionado.id = "";
+                    socket.emit('get_pregunta');
+                }, 900);
+            } else {
+                playSound('fail');
+
+                if (res.tiempoAgotado) {
+                    actualizarVidas(res.vidas);
+                    document.getElementById('txt-combo').innerText = "⏱️ ¡Tiempo agotado!";
+                    setTimeout(() => { socket.emit('get_pregunta'); }, 1000);
+                    return;
+                }
+
+                if (btnPresionado) btnPresionado.classList.add('incorrecta-anim');
+
+                setTimeout(() => {
+                    if (btnPresionado) btnPresionado.id = "";
+
+                    if (res.intento === 1) {
+                        intentoActual = 2;
+                        document.querySelectorAll('.opcion-btn').forEach(b => {
+                            if (!b.classList.contains('incorrecta-anim')) b.disabled = false;
+                        });
+                        iniciarTimer();
+                    } else {
+                        document.getElementById('txt-combo').innerText = "";
+                        actualizarVidas(res.vidas);
+                        socket.emit('get_pregunta');
+                    }
+                }, 900);
+            }
+        });
+
+        function actualizarVidas(vidas) {
+            let txt = "❤️".repeat(Math.max(0, vidas)) + "🖤".repeat(Math.max(0, 3 - vidas));
+            document.getElementById('txt-vidas').innerText = txt;
+        }
+
+        socket.on('game_over', (res) => {
+            clearInterval(timerInterval);
+            cambiarPantalla('pantalla-fin');
+            const c = window._contenido;
+            document.getElementById('fin-icono').textContent   = '💀';
+            document.getElementById('fin-titulo').textContent  = (c && c.resultados.derrota_titulo)  || '¡Fin de la partida!';
+            document.getElementById('fin-mensaje').textContent = (c && c.resultados.derrota_mensaje) || 'Gracias por jugar.';
+            document.getElementById('fin-puesto').textContent  = `#${res.puesto}`;
+            document.getElementById('fin-puntos').textContent  = puntosLocales;
+        });
+
+        socket.on('game_completed', (res) => {
+            clearInterval(timerInterval);
+            cambiarPantalla('pantalla-fin');
+            const c = window._contenido;
+            document.getElementById('fin-icono').textContent   = '🥇';
+            document.getElementById('fin-titulo').textContent  = (c && c.resultados.victoria_titulo)  || '¡Completaste la ronda!';
+            document.getElementById('fin-mensaje').textContent = (c && c.resultados.victoria_mensaje) || 'Gracias por jugar.';
+            document.getElementById('fin-puesto').textContent  = `#${res.puesto}`;
+            document.getElementById('fin-puntos').textContent  = puntosLocales;
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && username.trim().length > 2) {
+                activarMantenerPantallaEncendida();
+            }
+        });
+    </script>
+</body>
+</html>
