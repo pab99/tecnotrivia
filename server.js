@@ -3,71 +3,112 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const { MongoClient } = require('mongodb'); // Conector oficial de MongoDB
+const { MongoClient } = require('mongodb'); 
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// ── CONFIGURACIÓN DE SOCKET.IO PARA PRODUCCIÓN (RENDER) ────────────────
+const io = new Server(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST"]
+    },
+    transports: ['polling', 'websocket'] 
+});
 
 app.use(express.static('public'));
 
-// Cargar configuración del evento desde contenido.json
-const CONTENIDO_PATH = path.join(__dirname, 'contenido.json');
-const contenido = JSON.parse(fs.readFileSync(CONTENIDO_PATH, 'utf8'));
-const { mongo_db, mongo_col } = contenido.config;
-console.log(`📋 Evento: ${contenido.evento.nombre} | BD: ${mongo_db} | Colección: ${mongo_col}`);
+// Variables globales de configuración y estado en memoria
+let contenido = null;
+let preguntasTodo = [];
+let jugadores = {}; 
 
+const CONTENIDO_PATH = path.join(__dirname, 'contenido.json');
 const PREGUNTAS_PATH = path.join(__dirname, 'preguntas.json');
 
-// Cargar preguntas históricas de forma segura al arrancar
-const preguntasTodo = JSON.parse(fs.readFileSync(PREGUNTAS_PATH, 'utf8'));
+// Cargar respaldos locales iniciales por seguridad
+try {
+    contenido = JSON.parse(fs.readFileSync(CONTENIDO_PATH, 'utf8'));
+    preguntasTodo = JSON.parse(fs.readFileSync(PREGUNTAS_PATH, 'utf8'));
+} catch (err) {
+    console.error("⚠️ Error cargando archivos JSON locales de respaldo:", err.message);
+}
 
-// CONFIGURACIÓN DE PERSISTENCIA (MongoDB Atlas)
 const mongoUri = process.env.MONGO_URI; 
-let dbCollection = null;
-let jugadores = {}; // Se mantiene en memoria local para máxima velocidad de respuesta en el juego
+let dbCollection = null;     // Colección de jugadores
+let dbPreguntas = null;      // Nueva colección para preguntas
+let dbConfig = null;         // Nueva colección para textos/config del evento
 
-// Función asíncrona para inicializar la conexión con la nube al arrancar
 async function conectarBaseDeDatos() {
     if (!mongoUri) {
-        console.log("⚠️ ALERTA: No se detectó la variable MONGO_URI en Render. El servidor funcionará de forma efímera en memoria.");
+        console.log("⚠️ ALERTA: No se detectó MONGO_URI. Funcionando en memoria de forma efímera.");
         return;
     }
     try {
         const client = new MongoClient(mongoUri);
         await client.connect();
-        const db = client.db(mongo_db);       // Leído desde contenido.json
-        dbCollection = db.collection(mongo_col); // Leído desde contenido.json
+        
+        // Base de datos principal tomada del archivo de configuración inicial
+        const db = client.db(contenido.config.mongo_db);       
+        
+        dbCollection = db.collection(contenido.config.mongo_col); 
+        dbPreguntas = db.collection("preguntas_trivia");
+        dbConfig = db.collection("config_trivia");
+        
         console.log("🚀 CONECTADO EXITOSAMENTE A MONGO DB ATLAS");
 
-        // Recuperar todo el historial guardado en la nube y volcarlo a la memoria
+        // 1. Cargar Configuración Dinámica del Evento desde la Nube
+        const configNube = await dbConfig.findOne({ tipo: "contenido_actual" });
+        if (configNube) {
+            contenido = configNube.datos;
+            console.log(`📋 Configuración cargada desde la Nube: ${contenido.evento.nombre}`);
+        } else {
+            console.log(`📋 Usando configuración local por defecto: ${contenido.evento.nombre}`);
+        }
+
+        // 2. Cargar Preguntas Dinámicas desde la Nube
+        const preguntasNube = await dbPreguntas.find({}).toArray();
+        if (preguntasNube.length > 0) {
+            preguntasTodo = preguntasNube.map(p => ({
+                id: p.id,
+                pregunta: p.pregunta,
+                correcta: p.correcta,
+                incorrectas: p.incorrectas
+            }));
+            console.log(`📦 Preguntas sincronizadas desde la Nube: ${preguntasTodo.length}`);
+        } else {
+            console.log(`📦 Usando preguntas locales por defecto: ${preguntasTodo.length}`);
+        }
+
+        // 3. Recuperar Historial de Jugadores
         const historialNube = await dbCollection.find({}).toArray();
         historialNube.forEach(jugador => {
-            // Normalización preventiva para asegurar que no falte ningún campo clave
             if (jugador.puntos === undefined) jugador.puntos = 0;
             if (jugador.puntosRondaActual === undefined) jugador.puntosRondaActual = 0;
             if (!jugador.respondidas) jugador.respondidas = [];
             
             jugadores[jugador.username] = jugador;
         });
-        console.log(`📦 BBDD SINCRONIZADA. Usuarios recuperados desde la nube: ${Object.keys(jugadores).length}`);
+        console.log(`👥 Usuarios recuperados desde la nube: ${Object.keys(jugadores).length}`);
+        
+        // Iniciar el sistema de Auto-Ping una vez obtenida la URL pública de forma segura
+        activarKeepAlive();
+
     } catch (error) {
         console.error("❌ Error crítico al conectar a MongoDB Atlas:", error.message);
     }
 }
 
-// Inicializamos la conexión
 conectarBaseDeDatos();
 
-// Guarda o actualiza de forma asíncrona los datos de un jugador en la nube
+// Guarda o actualiza los datos de un jugador en la nube
 async function guardarRankingEnNube(username) {
     if (dbCollection && jugadores[username]) {
         try {
-            // Hacemos una copia limpia del objeto en memoria para la BBDD
             const datosJugador = { ...jugadores[username] };
-            delete datosJugador._id; // Quitamos el ID de Mongo de la estructura por si existiera conflicto
+            delete datosJugador._id; 
             
-            // Reemplaza o inserta (upsert) el registro buscando por el campo único username
             await dbCollection.updateOne(
                 { username: username },
                 { $set: datosJugador },
@@ -79,41 +120,96 @@ async function guardarRankingEnNube(username) {
     }
 }
 
-// Sirve el archivo de contenido/textos del evento (permite cambiar sin tocar el HTML)
+// Servir la configuración actualizada (prioriza memoria dinámica)
 app.get('/contenido.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'contenido.json'));
+    res.json(contenido);
 });
 
-// Sirve los datos curiosos generados desde preguntas.json (rotativo en pantalla gigante)
+// Servir datos curiosos generados dinámicamente desde las preguntas activas
 app.get('/datos_curiosos.json', (req, res) => {
-    res.sendFile(path.join(__dirname, 'datos_curiosos.json'));
+    const curiosos = preguntasTodo.map(p => ({
+        id: p.id,
+        pregunta: p.pregunta,
+        dato: p.correcta
+    }));
+    res.json(curiosos);
 });
 
-// Endpoint de emergencia por si requerís descargar un backup estático en JSON desde el Dashboard
 app.get('/ranking_persistente.json', (req, res) => {
     let listaCompleta = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
     res.json(listaCompleta);
+});
+
+// ── ENDPOINT ADMIN: Cambiar tema guardando directamente en MongoDB ──────────────────────────
+app.use(express.json({ limit: '500kb' }));
+
+app.post('/admin/cambiar-tema', async (req, res) => {
+    try {
+        const { preguntas, evento_nombre, evento_subtitulo, url_publica } = req.body;
+
+        if (!preguntas || !Array.isArray(preguntas) || preguntas.length < 10) {
+            return res.status(400).json({ ok: false, error: 'Se necesitan al menos 10 preguntas.' });
+        }
+        if (!evento_nombre || !url_publica) {
+            return res.status(400).json({ ok: false, error: 'Faltan nombre del evento o URL.' });
+        }
+
+        // Si la base de datos está disponible, persistimos en la nube
+        if (dbPreguntas && dbConfig) {
+            // 1. Limpiar preguntas anteriores e insertar las nuevas en MongoDB
+            await dbPreguntas.deleteMany({});
+            await dbPreguntas.insertMany(preguntas);
+
+            // 2. Estructurar el nuevo contenido de textos del evento
+            contenido.config.url_publica           = url_publica;
+            contenido.evento.nombre                = evento_nombre;
+            contenido.evento.subtitulo             = evento_subtitulo || evento_nombre;
+            contenido.login.titulo                 = '¡' + evento_nombre + '!';
+            contenido.leaderboard.titulo_principal = evento_nombre;
+            contenido.resultados.url_reinicio       = url_publica;
+
+            // 3. Guardar configuración estructurada en MongoDB
+            await dbConfig.updateOne(
+                { tipo: "contenido_actual" },
+                { $set: { tipo: "contenido_actual", datos: contenido } },
+                { upsert: true }
+            );
+
+            // 4. Actualizar las variables en tiempo real en la memoria del proceso
+            preguntasTodo = preguntas;
+
+            console.log(`🔄 TEMA ACTUALIZADO EN MONGO ATLAS: "${evento_nombre}" | ${preguntas.length} preguntas.`);
+            
+            res.json({
+                ok: true,
+                mensaje: `Tema "${evento_nombre}" aplicado y guardado en la nube con éxito.`,
+                preguntas_total: preguntas.length
+            });
+        } else {
+            res.status(500).json({ ok: false, error: "La base de datos de MongoDB no está inicializada." });
+        }
+
+    } catch (err) {
+        console.error('❌ Error al cambiar tema en la nube:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+    }
 });
 
 // LOGICA CENTRAL DE COMUNICACIÓN EN VIVO (WebSockets)
 io.on('connection', (socket) => {
     console.log('🔌 Nuevo cliente conectado:', socket.id);
 
-    // Enviar el ranking actual ni bien se conecta cualquier pantalla
     let listaAlConectar = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
     socket.emit('update_ranking', listaAlConectar);
 
-    // Solicitud explícita de datos desde el Dashboard de control o Pantalla de TV
     socket.on('pedir_ranking_dashboard', () => {
         let listaCompleta = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
         socket.emit('data_ranking_dashboard', listaCompleta);
     });
 
-    // Acción cuando un jugador ingresa su nombre e inicia el juego
     socket.on('join_game', (username) => {
         const cleanUsername = username.toLowerCase().replace('@', '').trim();
         
-        // Si el jugador ya existía en el historial global, reiniciamos sus valores de la ronda actual
         if (jugadores[cleanUsername]) {
             jugadores[cleanUsername].vidas = 3;
             jugadores[cleanUsername].respondidas = [];
@@ -121,7 +217,6 @@ io.on('connection', (socket) => {
             jugadores[cleanUsername].puntosRondaActual = 0; 
             jugadores[cleanUsername].socketId = socket.id;
         } else {
-            // Si es un jugador completamente nuevo en el evento
             jugadores[cleanUsername] = {
                 username: cleanUsername,
                 puntos: 0, 
@@ -134,26 +229,21 @@ io.on('connection', (socket) => {
         }
         
         socket.usernameClean = cleanUsername;
-        
-        // Guardamos en la nube asíncronamente y distribuimos el ranking actualizado en vivo
         guardarRankingEnNube(cleanUsername); 
         enviarRankingAClientes();
     });
 
-    // Envío de preguntas dinámicas y aleatorias por participante
     socket.on('get_pregunta', () => {
         const cleanUsername = socket.usernameClean;
         const jugador = jugadores[cleanUsername];
         if (!jugador) return;
 
-        // Validamos si perdió todas las vidas o si ya contestó el límite de la ronda (10 preguntas)
         if (jugador.vidas <= 0 || jugador.respondidas.length >= 10) {
             const puesto = obtenerPuesto(cleanUsername);
             socket.emit(jugador.vidas <= 0 ? 'game_over' : 'game_completed', { puntos: jugador.puntosRondaActual, puesto: puesto });
             return;
         }
 
-        // Filtrar preguntas del JSON para no repetir las que el usuario ya respondió
         const disponibles = preguntasTodo.filter(p => !jugador.respondidas.includes(p.id));
         if (disponibles.length === 0) {
             const puesto = obtenerPuesto(cleanUsername);
@@ -161,7 +251,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Tomar una pregunta al azar de las disponibles y mezclar las opciones de respuesta
         const pregunta = disponibles[Math.floor(Math.random() * disponibles.length)];
         const opciones = [pregunta.correcta, ...pregunta.incorrectas].sort(() => Math.random() - 0.5);
 
@@ -173,17 +262,15 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Procesamiento de las respuestas enviadas desde los celulares
     socket.on('enviar_respuesta', ({ preguntaId, respuesta, intento, tiempoEmpleado }) => {
         const cleanUsername = socket.usernameClean;
         const jugador = jugadores[cleanUsername];
         if (!jugador) return;
 
-        // Caso especial: El temporizador del cliente llegó a cero
         if (respuesta === "__TIEMPO_AGOTADO__") {
             jugador.respondidas.push(preguntaId);
             jugador.vidas -= 1;
-            jugador.combo = 0; // Rompe la racha de aciertos consecutivos
+            jugador.combo = 0; 
             
             socket.emit('resultado_respuesta', { correcta: false, tiempoAgotado: true, intento: 2, vidas: jugador.vidas });
             guardarRankingEnNube(cleanUsername);
@@ -192,20 +279,18 @@ io.on('connection', (socket) => {
         }
 
         const pregunta = preguntasTodo.find(p => p.id === preguntaId);
+        if (!pregunta) return;
+        
         const esCorrecta = pregunta.correcta === respuesta;
 
         if (esCorrecta) {
             jugador.respondidas.push(preguntaId);
             jugador.combo += 1;
 
-            // Puntuación base según el intento (10pts en el primero, 5pts en el segundo)
             let puntosBase = intento === 1 ? 10 : 5;
-            
-            // Bonus por velocidad usando un cálculo logarítmico basado en el tiempo empleado
             let bonusTiempo = Math.max(0, Math.round(15 * Math.log(20 / (tiempoEmpleado + 1))));
             let puntosPregunta = puntosBase + bonusTiempo;
 
-            // Sistema de multiplicadores por racha (Combo)
             let multiplicador = 1;
             if (jugador.combo === 3) multiplicador = 2;
             if (jugador.combo === 6) multiplicador = 4;
@@ -213,18 +298,15 @@ io.on('connection', (socket) => {
 
             jugador.puntosRondaActual += puntosPregunta * multiplicador;
 
-            // Récord histórico personal: Si superó su puntaje máximo anterior, lo actualizamos
             if (jugador.puntosRondaActual > jugador.puntos) {
                 jugador.puntos = jugador.puntosRondaActual;
             }
 
             socket.emit('resultado_respuesta', { correcta: true, puntos: jugador.puntosRondaActual, combo: jugador.combo });
         } else {
-            // Si falló pero fue su primer intento, le damos la segunda oportunidad
             if (intento === 1) {
                 socket.emit('resultado_respuesta', { correcta: false, intento: 1 });
             } else {
-                // Si falló en el segundo intento, pierde una vida y se rompe el combo
                 jugador.respondidas.push(preguntaId);
                 jugador.vidas -= 1;
                 jugador.combo = 0;
@@ -236,7 +318,6 @@ io.on('connection', (socket) => {
         enviarRankingAClientes();
     });
 
-    // Permite al usuario reiniciar la ronda desde la pantalla final para volver a jugar
     socket.on('reset_game', () => {
         const cleanUsername = socket.usernameClean;
         if (cleanUsername && jugadores[cleanUsername]) {
@@ -255,27 +336,32 @@ io.on('connection', (socket) => {
     });
 });
 
-// Función auxiliar para calcular el puesto en tiempo real de un usuario en el podio
 function obtenerPuesto(username) {
     let listaOrdenada = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
     let index = listaOrdenada.findIndex(j => j.username === username);
     return index !== -1 ? index + 1 : listaOrdenada.length;
 }
 
-// Función encargada de emitir la tabla general actualizada a todos los clientes enganchados
 function enviarRankingAClientes() {
     let lista = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
     io.emit('update_ranking', lista);
     io.emit('data_ranking_dashboard', lista); 
 }
 
-// INICIO DEL SERVIDOR WEB
+// Función Keep-Alive usando la URL real del evento configurada
+function activarKeepAlive() {
+    if (contenido && contenido.config && contenido.config.url_publica) {
+        const urlPeticion = contenido.config.url_publica;
+        setInterval(() => {
+            http.get(urlPeticion, (res) => {}).on('error', (err) => {
+                console.log("Ping Keep-Alive fallido silenciosamente.");
+            });
+        }, 300000); // Cada 5 minutos
+    }
+}
+
+// INICIO DEL SERVIDOR
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Servidor central corriendo en el puerto ${PORT}`);
-    
-    // Auto-Ping interno (Keep-Alive) cada 5 minutos para mitigar que Render duerma el proceso por inactividad
-    setInterval(() => {
-        http.get(`http://localhost:${PORT}`, (res) => {}).on('error', (err) => {});
-    }, 300000); 
 });
