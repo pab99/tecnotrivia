@@ -1,7 +1,7 @@
 {
   "config": {
     "url_publica": "https://trivia25demayo.onrender.com",
-    "mongo_db": "trivia_mayo_db",
+    "mongo_db": "trivia_db_user",
     "mongo_col": "trivia"
   },
   "evento": {
