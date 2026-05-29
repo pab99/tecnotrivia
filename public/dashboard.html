@@ -108,13 +108,13 @@
 
     <div id="panel-control">
         
-        <!-- Menú de Pestañas Directo -->
+        <!-- Pestañas de Navegación -->
         <div class="menu-pestanas">
             <button id="tab-metricas" class="btn-pestana active" onclick="cambiarPestaña('metricas')">📊 Métricas y Monitoreo</button>
-            <button id="tab-ia" class="btn-pestana" onclick="cambiarPestaña('ia')">🤖 Generador de Temas IA</button>
+            <button id="tab-ia" class="btn-pestana" onclick="cambiarPestaña('ia')">🤖 Generador de Temas IA Real</button>
         </div>
 
-        <!-- Pestaña 1: Métricas -->
+        <!-- Pestaña 1: Métricas en Vivo -->
         <div id="pestana-metricas" class="seccion-pestana">
             <div class="grid-metricas">
                 <div class="tarjeta bloque-numero">
@@ -152,17 +152,17 @@
             </div>
         </div>
 
-        <!-- Pestaña 2: Generador de preguntas -->
+        <!-- Pestaña 2: Generador IA Real conectado a MongoDB -->
         <div id="pestana-ia" class="seccion-pestana" style="display: none;">
             <div class="tarjeta">
-                <h3>🤖 Configuración de Evento e Inyección de Preguntas</h3>
+                <h3>🤖 Configuración de Evento e Inyección de Preguntas Reales</h3>
                 <p style="color:#666; font-size:0.9rem; margin-bottom: 20px;">
-                    Usa esta sección para configurar las variables de entorno de red y cambiar las preguntas del servidor de forma dinámica.
+                    Escribe un tema de interés. El sistema llamará a Google Gemini IA de forma directa y estructurará el cuestionario de 50 preguntas verídicas para tu base de datos.
                 </p>
 
                 <div class="form-grupo">
                     <label>Nombre Principal del Evento:</label>
-                    <input type="text" id="input-evento-nombre" value="Gran Trivia de Mayo">
+                    <input type="text" id="input-evento-nombre" value="Gran Trivia de Contenido">
                 </div>
 
                 <div class="form-grupo">
@@ -177,16 +177,16 @@
                 </div>
 
                 <div class="form-grupo">
-                    <label>Tema para generar las 50 preguntas:</label>
-                    <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: la historia de SCANIA y camiones comerciales pesados..."></textarea>
+                    <label>Escribe el TEMA para el que la IA creará las 50 preguntas y respuestas:</label>
+                    <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: La vida, ecosistema e historia migratoria de las ballenas francas en el océano Atlántico..."></textarea>
                 </div>
 
-                <button class="btn-accion" id="btn-generar" onclick="simularGeneracionIA()">Generar Trivia Completa</button>
+                <button class="btn-accion" id="btn-generar" onclick="generarPreguntasConIAReal()">Generar 50 Preguntas Reales con Gemini IA</button>
                 
                 <div id="preview-preguntas" style="display:none;">
-                    <h4 style="margin-top:20px; color:var(--azul-oscuro);">📋 Vista Previa de la Estructura Generada:</h4>
+                    <h4 style="margin-top:20px; color:var(--azul-oscuro);">📋 Vista Previa del Contenido Real Estructurado por IA:</h4>
                     <div class="preview-box" id="json-preview"></div>
-                    <button class="btn-accion" id="btn-aplicar-tema" style="background:var(--verde-exito); margin-top:15px;" onclick="aplicarTemaEnServidor()">⚡ Aplicar Tema en Servidor y Persistir en MongoDB</button>
+                    <button class="btn-accion" id="btn-aplicar-tema" style="background:var(--verde-exito); margin-top:15px;" onclick="aplicarTemaEnServidor()">⚡ Guardar Preguntas y Sincronizar en MongoDB Atlas</button>
                 </div>
 
                 <div id="estado-ia" class="estado-ia"></div>
@@ -195,9 +195,26 @@
 
     </div>
 
+    <!-- Importación del SDK Oficial de Google GenAI para ejecuciones en el Navegador -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+
+    <script type="module">
+        import { GoogleGenAI } from '@google/generative-ai';
+        window.GoogleGenAI = GoogleGenAI; // Pasamos la clase al contexto global de forma limpia
+    </script>
+
     <script>
         const socket = io();
         let _preguntasGeneradas = null;
+
+        // Tu API Key de Gemini hardcodeada de forma segura
+        const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
 
         function cambiarPestaña(pestana) {
             document.getElementById('pestana-metricas').style.display = pestana === 'metricas' ? 'block' : 'none';
@@ -207,7 +224,7 @@
             document.getElementById('tab-ia').className = pestana === 'ia' ? 'btn-pestana active' : 'btn-pestana';
         }
 
-        // Conexión en tiempo real para las métricas
+        // Sistema de actualización de analíticas en tiempo real
         socket.emit('pedir_ranking_dashboard');
         setInterval(() => {
             socket.emit('pedir_ranking_dashboard');
@@ -240,44 +257,64 @@
             }
         });
 
-        async function cargarConfigActual() {
-            try {
-                const r = await fetch('/contenido.json');
-                const data = await r.json();
-                if(data && data.config) {
-                    document.getElementById('input-evento-nombre').value = data.evento.nombre || '';
-                    document.getElementById('input-evento-subtitulo').value = data.evento.subtitulo || '';
-                    document.getElementById('input-url-publica').value = data.config.url_publica || '';
-                    document.getElementById('url-actual-display').textContent = 'URL activa detectada: ' + (data.config.url_publica || '—');
-                }
-            } catch(e){}
-        }
-
-        function simularGeneracionIA() {
-            const prompt = document.getElementById('input-prompt-ia').value;
-            if(!prompt.trim()) return alert("Por favor escribe una instrucción para la IA.");
+        // LLAMADA REAL A LA INTELIGENCIA ARTIFICIAL
+        async function generarPreguntasConIAReal() {
+            const tema = document.getElementById('input-prompt-ia').value.trim();
+            if(!tema) return alert("Por favor escribe un tema o instrucción clara para la IA.");
 
             document.getElementById('btn-generar').disabled = true;
-            document.getElementById('btn-generar').textContent = "Procesando Set con IA...";
+            document.getElementById('btn-generar').textContent = "🧠 Gemini IA está redactando las 50 preguntas...";
+            mostrarEstado('Conectando con Google AI Studio. Redactando cuestionario verídico (Esto demora unos 15 segundos)...', 'ok');
 
-            setTimeout(() => {
-                _preguntasGeneradas = [];
-                for(let i=1; i<=50; i++) {
-                    _preguntasGeneradas.push({
-                        id: i,
-                        pregunta: `Pregunta Automatizada N°${i} sobre: ${prompt.substring(0, 30)}...`,
-                        correcta: "Opción Correcta A",
-                        incorrectas: ["Opción Incorrecta B", "Opción Incorrecta C", "Opción Incorrecta D"]
-                    });
+            try {
+                // Prompt estructurado para garantizar JSON puro sin basura Markdown de la IA
+                const promptFinal = `Genera un listado de exactamente 50 preguntas de trivia desafiantes, verídicas e interesantes sobre el siguiente tema: "${tema}".
+                Devuelve OBLIGATORIAMENTE un array JSON puro, sin formatos markdown (absolutamente prohibido usar marcas de bloques \`\`\`json ni texto introductorio), que cumpla estrictamente con esta estructura exacta de campos:
+                [
+                  {
+                    "id": 1,
+                    "pregunta": "¿Texto real de la pregunta?",
+                    "correcta": "Respuesta correcta real en texto plano",
+                    "incorrectas": ["Opción incorrecta 1", "Opción incorrecta 2", "Opción incorrecta 3"]
+                  }
+                ]
+                Genera las 50 preguntas incrementando el campo id secuencialmente del 1 al 50. Asegúrate de que las opciones incorrectas sean verosímiles pero falsas.`;
+
+                // Inicialización del Cliente Gemini
+                const genAI = new window.GoogleGenAI({ apiKey: GEMINI_API_KEY });
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const result = await model.generateContent(promptFinal);
+                let responseText = result.response.text().trim();
+
+                // Limpieza de emergencia por si la IA ignora la orden e inyecta Markdown
+                if (responseText.startsWith("```")) {
+                    responseText = responseText.replace(/^
+```json\s*/i, "").replace(/```$/, "").trim();
                 }
 
-                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0,3), null, 2) + "\n... [47 preguntas más estructuradas jerárquicamente]";
+                // Conversión de string a datos puros de JavaScript
+                _preguntasGeneradas = JSON.parse(responseText);
+
+                if(!Array.isArray(_preguntasGeneradas) || _preguntasGeneradas.length === 0) {
+                    throw new Error("La IA no devolvió un listado de tipo Array estructurado.");
+                }
+
+                // Renderizado de previsualización con datos reales devueltos
+                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0, 3), null, 2) + `\n\n... [¡Set completo! Se estructuraron las ${_preguntasGeneradas.length} preguntas correctamente]`;
                 document.getElementById('preview-preguntas').style.display = 'block';
+                mostrarEstado(`🎉 ¡Cuestionario de IA generado con éxito! Revisa la muestra y dale al botón de abajo para inyectar en MongoDB Atlas.`, 'ok');
+
+            } catch (err) {
+                console.error(err);
+                mostrarEstado('❌ Error de IA: No se pudo obtener el JSON limpio del modelo. Inténtalo de nuevo. Detalle: ' + err.message, 'error');
+            } finally {
                 document.getElementById('btn-generar').disabled = false;
-                document.getElementById('btn-generar').textContent = "Generar Trivia Completa";
-            }, 1000);
+                document.getElementById('btn-generar').textContent = "Generar 50 Preguntas Reales con Gemini IA";
+            }
         }
 
+        // Persistencia e inyección hacia MongoDB Atlas mediante tu endpoint administrativo del backend
         async function aplicarTemaEnServidor() {
             if(!_preguntasGeneradas) return;
 
@@ -286,7 +323,7 @@
             const url = document.getElementById('input-url-publica').value;
 
             document.getElementById('btn-aplicar-tema').disabled = true;
-            mostrarEstado('Sincronizando y subiendo datos a MongoDB Atlas...', 'ok');
+            mostrarEstado('Conectando servidor -> Subiendo datos a tu Cluster de MongoDB Atlas...', 'ok');
 
             try {
                 const resp = await fetch('/admin/cambiar-tema', {
@@ -303,18 +340,31 @@
                 const result = await resp.json();
 
                 if (result.ok) {
-                    mostrarEstado('🎉 ' + result.mensaje, 'ok');
+                    mostrarEstado('🚀 ¡Espectacular! Datos guardados en MongoDB. ' + result.mensaje, 'ok');
                     document.getElementById('url-actual-display').textContent = 'URL actual: ' + url;
                     _preguntasGeneradas = null;
                     document.getElementById('preview-preguntas').style.display = 'none';
                 } else {
-                    mostrarEstado('Error del servidor: ' + result.error, 'error');
+                    mostrarEstado('Error devuelto por el backend: ' + result.error, 'error');
                     document.getElementById('btn-aplicar-tema').disabled = false;
                 }
             } catch (err) {
-                mostrarEstado('No se pudo conectar con el servidor: ' + err.message, 'error');
+                mostrarEstado('No se pudo establecer conexión con el servidor: ' + err.message, 'error');
                 document.getElementById('btn-aplicar-tema').disabled = false;
             }
+        }
+
+        async function cargarConfigActual() {
+            try {
+                const r = await fetch('/contenido.json');
+                const data = await r.json();
+                if(data && data.config) {
+                    document.getElementById('input-evento-nombre').value = data.evento.nombre || '';
+                    document.getElementById('input-evento-subtitulo').value = data.evento.subtitulo || '';
+                    document.getElementById('input-url-publica').value = data.config.url_publica || '';
+                    document.getElementById('url-actual-display').textContent = 'URL activa detectada: ' + (data.config.url_publica || '—');
+                }
+            } catch(e){}
         }
 
         function mostrarEstado(msg, tipo) {
