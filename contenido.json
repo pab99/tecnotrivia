@@ -1,8 +1,8 @@
 {
   "config": {
     "url_publica": "https://trivia25demayo.onrender.com",
-    "mongo_db": "trivia_db_user",
-    "mongo_col": "trivia"
+    "mongo_db": "trivia_mayo_db",
+    "mongo_col": "ranking"
   },
   "evento": {
     "nombre": "Gran Trivia de Mayo",
