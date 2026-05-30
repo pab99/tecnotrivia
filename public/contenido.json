@@ -7,7 +7,7 @@
   "evento": {
     "nombre": "Gran Trivia",
     "edicion": "2025",
-    "emoji_principal": "🇦🇷",
+    "emoji_principal": "🩵",
     "emojis_header": "⭐ ⭐ ⭐",
     "subtitulo": "¡Participá y probá tu sabiduría!",
     "footer": "(R) Tecnoincas.com.ar",
@@ -36,6 +36,8 @@
     "victoria_mensaje": "¡Felicitaciones! Completaste la ronda. Pero podés dar más, ¡volvé al juego con más energía y superá tus límites!",
     "derrota_titulo": "¡Uh, casi! 💪",
     "derrota_mensaje": "No pudimos completar el juego esta vez... ¡Volvé por una revancha!",
+    "emoji_derrota": "⭐",
+    "emoji_victoria": "🥇",
     "label_puesto": "Puesto",
     "label_puntaje": "Puntaje",
     "btn_reiniciar": "🔄 Volver a Jugar"
