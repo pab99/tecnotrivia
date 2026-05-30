@@ -122,6 +122,7 @@ async function guardarRankingEnNube(username) {
 
 // Servir la configuración actualizada (prioriza memoria dinámica)
 app.get('/contenido.json', (req, res) => {
+    console.log(`📄 /contenido.json → nombre: "${contenido.evento.nombre}" | emoji_1: "${contenido.evento.emoji_1}"`);
     res.json(contenido);
 });
 
@@ -353,8 +354,8 @@ app.post('/admin/actualizar-config', async (req, res) => {
             );
         }
 
-        console.log(`⚙️ CONFIG ACTUALIZADA: "${evento_nombre}" | emojis: ${contenido.evento.emojis_header}`);
-        res.json({ ok: true, mensaje: `Configuración de "${evento_nombre}" guardada en la nube.` });
+        console.log(`⚙️ CONFIG ACTUALIZADA: "${evento_nombre}" | emojis: ${contenido.evento.emojis_header} | emoji_principal: ${contenido.evento.emoji_principal}`);
+        res.json({ ok: true, mensaje: `Configuración de "${evento_nombre}" guardada. Recargá las páginas para ver los cambios.`, debug: { nombre: contenido.evento.nombre, emoji_1: contenido.evento.emoji_1, emoji_principal: contenido.evento.emoji_principal } });
 
     } catch (err) {
         console.error('❌ Error al actualizar config:', err.message);
