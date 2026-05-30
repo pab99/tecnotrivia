@@ -293,6 +293,9 @@ header {
             <h2 id="ldb-btn-sumate">¡Sumate a Jugar!</h2>
             <div id="contenedor-qr"></div>
             <p id="ldb-instruccion-qr">Escaneá el código QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷</p>
+            <div id="trivia-instagram" style="margin-top:10px; font-size:0.9rem; color:#ccc; text-align:center; display:none;">
+                📸 Seguinos en Instagram <strong id="trivia-instagram-usuario"></strong>
+            </div>
         </div>
 
         <!-- Contenedor del Ranking Derecho con ID corregido -->
@@ -322,6 +325,10 @@ header {
                 document.getElementById('ldb-instruccion-qr').innerHTML  = ldb.instruccion_qr.replace(',', ',<br>');
                 document.title = c.evento.nombre + ' — Leaderboard';
                 document.getElementById('footer-ldb').textContent = c.evento.footer;
+                if (c.evento && c.evento.instagram_usuario) {
+                    document.getElementById('trivia-instagram-usuario').textContent = c.evento.instagram_usuario;
+                    document.getElementById('trivia-instagram').style.display = 'block';
+                }
                 // Leer ciclos de curiosidades desde el JSON
                 if (ldb.ciclos_curiosidades) CICLOS_SABIAS_QUE = ldb.ciclos_curiosidades;
             })

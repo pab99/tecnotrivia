@@ -553,6 +553,9 @@ header {
             <a id="btn-reiniciar" href="index.html" class="btn-reiniciar" onclick="playSound('click')">
                 🔄 Volver a Jugar
             </a>
+            <div id="fin-instagram" style="margin-top:14px; font-size:0.85rem; color:#555; text-align:center; display:none;">
+                📸 Seguinos en Instagram <strong id="fin-instagram-usuario"></strong>
+            </div>
         </div>
 
     </div>
@@ -592,6 +595,10 @@ header {
                 // Botón reiniciar
                 document.getElementById('btn-reiniciar').href = c.config.url_publica;
                 document.getElementById('btn-reiniciar').textContent = c.resultados.btn_reiniciar;
+                if (c.evento && c.evento.instagram_usuario) {
+                    document.getElementById('fin-instagram-usuario').textContent = c.evento.instagram_usuario;
+                    document.getElementById('fin-instagram').style.display = 'block';
+                }
 
                 // Labels resultados
                 document.getElementById('lbl-puntaje').textContent = c.resultados.label_puntaje.replace(':','');

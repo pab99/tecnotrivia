@@ -364,8 +364,13 @@
 
             <div style="margin-top: 8px;">
                 <label style="font-size:0.82rem; font-weight:700; color:#555;">URL pública del juego</label>
-                <input id="cfg-url" class="campo-tema" placeholder="[https://mi-trivia.onrender.com](https://mi-trivia.onrender.com)">
+                <input id="cfg-url" class="campo-tema" placeholder="https://mi-trivia.onrender.com">
                 <div class="url-actual" id="url-actual-display">Cargando URL actual...</div>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <label style="font-size:0.82rem; font-weight:700; color:#555;">📸 Instagram del evento</label>
+                <input id="cfg-instagram" class="campo-tema" placeholder="@usuario_del_evento">
             </div>
 
             <hr class="separador-tema">
@@ -506,6 +511,7 @@
                 document.getElementById('cfg-emoji2').value = c.evento.emoji_2 || '';
                 document.getElementById('cfg-emoji3').value = c.evento.emoji_3 || '';
                     document.getElementById('cfg-url').value = c.config.url_publica || '';
+                    document.getElementById('cfg-instagram').value = c.evento.instagram_usuario || '';
                     document.getElementById('url-actual-display').textContent = 'URL actual: ' + (c.config.url_publica || '—');
                 });
         }
@@ -556,6 +562,7 @@
             const emoji2   = document.getElementById('cfg-emoji2').value.trim();
             const emoji3   = document.getElementById('cfg-emoji3').value.trim();
             const url      = document.getElementById('cfg-url').value.trim();
+            const instagram = document.getElementById('cfg-instagram').value.trim();
 
             if (!nombre || !url) {
                 mostrarEstado('❌ Completá el nombre del evento y la URL antes de aplicar.', 'error');
@@ -576,7 +583,8 @@
                             emoji_1: emoji1,
                             emoji_2: emoji2,
                             emoji_3: emoji3,
-                            url_publica: url
+                            url_publica: url,
+                            instagram_usuario: instagram
                         })
                     });
                     const r = await resp.json();
@@ -592,7 +600,7 @@
                 // Solo actualizar configuración (título, emojis, etc.) sin tocar preguntas
                 mostrarEstado('⏳ Actualizando configuración en MongoDB Atlas...', 'generando');
                 try {
-                    const payload = { evento_nombre: nombre, evento_subtitulo: subtitulo, emoji_1: emoji1, emoji_2: emoji2, emoji_3: emoji3, url_publica: url };
+                    const payload = { evento_nombre: nombre, evento_subtitulo: subtitulo, emoji_1: emoji1, emoji_2: emoji2, emoji_3: emoji3, url_publica: url, instagram_usuario: instagram };
                     console.log('📤 Enviando a /admin/actualizar-config:', payload);
                     const resp = await fetch('/admin/actualizar-config', {
                         method: 'POST',
