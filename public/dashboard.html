@@ -200,9 +200,6 @@
             display: inline-block;
             position: relative;
         }
-        .logo-tecnoincas::after {
-            content: ''; position: absolute; width: 6px; height: 6px; background: #95a5a6; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #555;
-        }
 
         .btn-ia { background: linear-gradient(135deg, #6c3483, #a569bd); }
         .btn-aplicar { background: #27ae60; }
@@ -211,21 +208,17 @@
             width: 100%; padding: 10px 14px; margin: 8px 0;
             border: 2px solid #ced4da; border-radius: 8px;
             font-size: 0.95rem; font-family: inherit;
-            transition: border-color 0.2s;
         }
-        .campo-tema:focus { outline: none; border-color: var(--celeste); }
         .preview-preguntas {
             background: var(--gris-claro); border-radius: 10px;
             padding: 14px; margin-top: 14px;
-            border-left: 4px solid #a569bd;
-            display: none;
+            border-left: 4px solid #a569bd; display: none;
         }
-        .preview-preguntas h4 { color: #6c3483; margin-bottom: 10px; font-size: 0.9rem; }
         .preview-item {
             background: white; border-radius: 6px; padding: 10px 12px;
             margin-bottom: 8px; font-size: 0.85rem; border: 1px solid #e0d5f0;
         }
-        .preview-item .pq { color: #333; font-weight: 600; margin-bottom: 3px; }
+        .preview-item .pq { color: #333; font-weight: 600; }
         .preview-item .pa { color: #27ae60; font-size: 0.82rem; }
         .estado-ia {
             padding: 10px 14px; border-radius: 8px; margin-top: 10px;
@@ -234,25 +227,8 @@
         .estado-ia.generando { background: #fef9e7; color: #d68910; border: 1px solid #f9e79f; }
         .estado-ia.ok { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
         .estado-ia.error { background: #fdedec; color: #c0392b; border: 1px solid #f5b7b1; }
-        .url-actual {
-            font-size: 0.8rem; color: #7f8c8d; margin-top: 4px;
-            font-family: monospace; word-break: break-all;
-        }
+        .url-actual { font-size: 0.8rem; color: #7f8c8d; font-family: monospace; }
         .separador-tema { border: none; border-top: 2px dashed #e0d5f0; margin: 16px 0; }
-        
-        @media print {
-            body { background: white; color: black; }
-            #seccion-login, .header-dash, .tarjeta-control-operativa, footer { display: none !important; }
-            #seccion-dashboard { display: block !important; margin: 0; padding: 0; width: 100%; }
-            .grid-paneles { grid-template-columns: 1fr; gap: 0; }
-            .tarjeta-control { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; page-break-inside: avoid; }
-            .punto-curva { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #74b9ff !important; }
-            .barra-progreso-llenado { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #fbcb3b !important; }
-            .tabla-auditoria { page-break-inside: auto; width: 100% !important; }
-            .tabla-auditoria tr { page-break-inside: avoid; page-break-after: auto; }
-            .print-footer-fijo { display: flex !important; align-items: center; justify-content: center; gap: 8px; margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; font-size: 0.85rem; color: #000; }
-        }
-        .print-footer-fijo { display: none; }
     </style>
 </head>
 <body>
@@ -278,9 +254,8 @@
 
         <div class="grid-paneles">
             <div>
-                <div class="tarjeta-control tarjeta-control-operativa">
+                <div class="tarjeta-control">
                     <h3>Acciones Operativas</h3>
-                    <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Gestioná los datos recolectados físicamente en el disco.</p>
                     <button class="btn-dash btn-pdf" onclick="window.print()">🖨️ Imprimir Reporte PDF</button>
                     <button class="btn-dash btn-json" onclick="descargarBaseDatos()">💾 Descargar Base (.json)</button>
                     <button id="btn-reset-sistema" class="btn-dash btn-reset" onclick="ejecutarResetCompleto()">🗑️ Limpiar Lista de Usuarios</button>
@@ -332,8 +307,6 @@
 
         <div class="tarjeta-control" style="width: 100%;">
             <h3>Listado Oficial de Participantes (Ordenado por Ranking Real)</h3>
-            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Datos leídos dinámicamente desde el archivo persistente.</p>
-            
             <table class="tabla-auditoria">
                 <thead>
                     <tr>
@@ -352,11 +325,7 @@
         </div>
 
         <div class="tarjeta-control" style="width: 100%; border-color: #a569bd; margin-top: 10px;">
-            <h3 style="border-left-color: #a569bd;">🤖 Configuración del Evento</h3>
-            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 16px;">
-                Cambiá el tema, regenerá las preguntas con IA y actualizá la URL sin tocar ningún archivo.
-            </p>
-
+            <h3 style="border-left-color: #a569bd;">🤖 Configuración del Evento & IA</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label style="font-size:0.82rem; font-weight:700; color:#555;">Nombre del evento</label>
@@ -370,16 +339,15 @@
 
             <div style="margin-top: 8px;">
                 <label style="font-size:0.82rem; font-weight:700; color:#555;">URL pública del juego</label>
-                <input id="cfg-url" class="campo-tema" placeholder="https://mi-trivia.onrender.com">
+                <input id="cfg-url" class="campo-tema" placeholder="[https://mi-trivia.onrender.com](https://mi-trivia.onrender.com)">
                 <div class="url-actual" id="url-actual-display">Cargando URL actual...</div>
             </div>
 
             <hr class="separador-tema">
 
             <label style="font-size:0.82rem; font-weight:700; color:#555;">Tema para las preguntas</label>
-            <input id="cfg-tema" class="campo-tema" placeholder="Ej: la vida de las ballenas en el océano austral">
-            <p style="font-size:0.78rem; color:#999; margin-top:2px;">La IA generará 50 preguntas con 4 opciones cada una sobre este tema.</p>
-
+            <input id="cfg-tema" class="campo-tema" placeholder="Ej: Historia de la robótica industrial">
+            
             <button class="btn-dash btn-ia" onclick="generarConIA()" style="margin-top: 12px;">
                 ✨ Generar 50 preguntas con IA
             </button>
@@ -390,18 +358,13 @@
                 <h4>👁️ Vista previa — primeras 5 preguntas generadas</h4>
                 <div id="preview-lista"></div>
                 <p style="font-size:0.78rem; color:#888; margin-top:8px;">
-                    Se generaron <strong id="total-generadas">0</strong> preguntas en total. Revisá las primeras 5 y confirmá para aplicar.
+                    Se generaron <strong id="total-generadas">0</strong> preguntas. Revisá el extracto y confirmá los cambios.
                 </p>
             </div>
 
             <button class="btn-dash btn-aplicar" id="btn-aplicar-tema" onclick="aplicarTema()" disabled style="margin-top: 12px;">
                 ✅ Confirmar y Aplicar al Evento
             </button>
-        </div>
-
-        <div class="print-footer-fijo">
-            <div class="logo-tecnoincas"></div>
-            <span id="dash-footer-reporte">Reporte Oficial de Auditoría - (R) Tecnoincas.com.ar</span>
         </div>
     </div>
 
@@ -414,31 +377,15 @@
         const USUARIO_VALIDO = "admin";
         const CLAVE_VALIDA = "tecnoincas2026";
         let socket;
+        let _preguntasGeneradas = null;
 
-        // ── CARGAR CONTENIDO DESDE JSON AL INICIO ──
+        // Cargar datos estáticos iniciales
         fetch('/contenido.json')
             .then(r => r.json())
             .then(c => {
-                const d = c.dashboard;
-                document.title = d.titulo_panel + ' — ' + c.evento.nombre;
-                document.getElementById('dash-titulo-login').textContent     = d.titulo_login;
-                document.getElementById('dash-subtitulo-login').textContent  = d.subtitulo_login;
-                document.getElementById('input-usuario').placeholder         = d.placeholder_usuario;
-                document.getElementById('input-clave').placeholder           = d.placeholder_clave;
-                document.getElementById('dash-btn-ingresar').textContent     = d.btn_ingresar;
-                document.getElementById('dash-titulo-panel').textContent     = d.titulo_panel;
-                document.getElementById('dash-subtitulo-panel').textContent  = d.subtitulo_panel;
-                document.getElementById('dash-footer-reporte').textContent   = d.footer_reporte;
-                document.getElementById('dash-footer').textContent           = c.evento.footer;
-            })
-            .catch(() => {});
+                document.getElementById('dash-footer').textContent = c.evento.footer || '(R) Tecnoincas.com.ar';
+            }).catch(() => {});
 
-        // ESCUCHA DE ENTER EN LOS CAMPOS DE LOGIN
-        document.getElementById('input-clave').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') autenticar();
-        });
-
-        // AUTENTICACIÓN
         function autenticar() {
             const usr = document.getElementById('input-usuario').value.trim();
             const pass = document.getElementById('input-clave').value.trim();
@@ -446,190 +393,91 @@
             if (usr === USUARIO_VALIDO && pass === CLAVE_VALIDA) {
                 document.getElementById('seccion-login').style.display = 'none';
                 document.getElementById('seccion-dashboard').style.display = 'block';
-                
                 inicializarConexionReal();
                 cargarConfigActual();
             } else {
-                alert('Credenciales incorrectas. Verifique los datos ingresados.');
+                alert('Credenciales incorrectas.');
             }
-        }
-
-        function tokenizeUsername(username) {
-            if (!username) return '@anonimo';
-            return username.startsWith('@') ? username : '@' + username;
-        }
-
-        function obtenerHoraFormateada(jugador) {
-            if (jugador.hora) return jugador.hora; 
-            const d = new Date();
-            let hh = String(d.getHours()).padStart(2, '0');
-            let mm = String(d.getMinutes()).padStart(2, '0');
-            return `${hh}:${mm}`;
         }
 
         function inicializarConexionReal() {
-            if (typeof io === 'undefined') {
-                console.error("Socket.io no está disponible.");
-                return;
-            }
-
+            if (typeof io === 'undefined') return;
             socket = io();
             socket.emit('pedir_ranking_dashboard');
 
             socket.on('data_ranking_dashboard', (listaJugadores) => {
                 const tbody = document.getElementById('tabla-usuarios-cuerpo');
-                const lblTotal = document.getElementById('lbl-total-usr');
-                const lblMax = document.getElementById('lbl-max-puntos');
-                
                 tbody.innerHTML = "";
                 
                 if (!listaJugadores || listaJugadores.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Nadie ha participado todavía.</td></tr>`;
-                    lblTotal.innerText = "0";
-                    lblMax.innerText = "0 pts";
-                    procesarAnaliticasReales([]);
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Nadie participó todavía.</td></tr>`;
                     return;
                 }
 
-                lblTotal.innerText = listaJugadores.length;
-                lblMax.innerText = (listaJugadores[0].puntos || 0) + " pts";
+                document.getElementById('lbl-total-usr').innerText = listaJugadores.length;
+                document.getElementById('lbl-max-puntos').innerText = (listaJugadores[0].puntos || 0) + " pts";
 
                 listaJugadores.forEach((jugador, index) => {
-                    let medalla = "";
-                    if (index === 0) medalla = " 🥇";
-                    else if (index === 1) medalla = " 🥈";
-                    else if (index === 2) medalla = " 🥉";
-
-                    const horaMostrar = obtenerHoraFormateada(jugador);
-                    if (!jugador.hora) jugador.hora = horaMostrar;
-
                     const fila = document.createElement('tr');
                     fila.innerHTML = `
-                        <td><strong>#${index + 1}</strong>${medalla}</td>
-                        <td>${tokenizeUsername(jugador.username)}</td>
-                        <td class="txt-hora" style="text-align: center;">${horaMostrar} hs</td>
+                        <td><strong>#${index + 1}</strong></td>
+                        <td>@${jugador.username}</td>
+                        <td class="txt-hora" style="text-align: center;">${jugador.hora || '12:00'} hs</td>
                         <td class="txt-puntos-tabla" style="text-align: right;">${jugador.puntos || 0} pts</td>
                     `;
                     tbody.appendChild(fila);
                 });
-
                 procesarAnaliticasReales(listaJugadores);
             });
         }
 
         function procesarAnaliticasReales(jugadores) {
             let curva = { h10: 0, h11: 0, h12: 0, h13: 0, h14: 0, h15: 0, h16: 0, h17: 0, h18: 0, h19: 0, h20: 0 };
-            let totalAciertosPerfectos = 0;
+            let perfectos = 0;
 
-            jugadores.forEach((j) => {
-                if (j.puntos >= 50) { 
-                    totalAciertosPerfectos++;
-                }
+            jugadores.forEach(j => {
+                if (j.puntos >= 50) perfectos++;
+                let h = j.hora ? parseInt(j.hora.split(':')[0], 10) : 12;
+                if (h >= 10 && h <= 20) curva[`h${h}`]++;
+            });
 
-                if (j.hora) {
-                    let partes = j.hora.split(':');
-                    let horaEntera = parseInt(partes[0], 10);
-
-                    if (horaEntera === 10) curva.h10++;
-                    else if (horaEntera === 11) curva.h11++;
-                    else if (horaEntera === 12) curva.h12++;
-                    else if (horaEntera === 13) curva.h13++;
-                    else if (horaEntera === 14) curva.h14++;
-                    else if (horaEntera === 15) curva.h15++;
-                    else if (horaEntera === 16) curva.h16++;
-                    else if (horaEntera === 17) curva.h17++;
-                    else if (horaEntera === 18) curva.h18++;
-                    else if (horaEntera === 19) curva.h19++;
-                    else if (horaEntera >= 20) curva.h20++;
+            let max = Math.max(...Object.values(curva), 1);
+            Object.keys(curva).forEach(h => {
+                let el = document.getElementById(`curva-${h}`);
+                if (el) {
+                    el.style.height = `${(curva[h] / max) * 100}%`;
+                    el.innerText = curva[h];
                 }
             });
 
-            let picoMaximo = Math.max(curva.h10, curva.h11, curva.h12, curva.h13, curva.h14, curva.h15, curva.h16, curva.h17, curva.h18, curva.h19, curva.h20, 1);
-
-            const horasMapeadas = ['h10', 'h11', 'h12', 'h13', 'h14', 'h15', 'h16', 'h17', 'h18', 'h19', 'h20'];
-            horasMapeadas.forEach((h) => {
-                let elementoBarra = document.getElementById(`curva-${h}`);
-                if (elementoBarra) {
-                    elementoBarra.style.height = `${(curva[h] / picoMaximo) * 100}%`;
-                    elementoBarra.innerText = curva[h];
-                }
-            });
-
-            let total = jugadores.length || 1;
-            let pctAlto = Math.round((totalAciertosPerfectos / total) * 100);
-            let pctBajo = 100 - pctAlto;
-
+            let pctAlto = Math.round((perfectos / (jugadores.length || 1)) * 100);
             document.getElementById('lbl-pct-alto').innerText = `${pctAlto}%`;
             document.getElementById('barra-pct-alto').style.width = `${pctAlto}%`;
-
-            document.getElementById('lbl-pct-bajo').innerText = `${pctBajo}%`;
-            document.getElementById('barra-pct-bajo').style.width = `${pctBajo}%`;
+            document.getElementById('lbl-pct-bajo').innerText = `${100 - pctAlto}%`;
+            document.getElementById('barra-pct-bajo').style.width = `${100 - pctAlto}%`;
         }
-
-        function descargarBaseDatos() {
-            if(socket) {
-                alert("Extrayendo ranking_persistente.json nativo...");
-                window.open('/ranking_persistente.json', '_blank');
-            }
-        }
-
-        let estadoResetConfirmacion = 0;
-        function ejecutarResetCompleto() {
-            const btn = document.getElementById('btn-reset-sistema');
-            if (estadoResetConfirmacion === 0) {
-                btn.innerText = "⚠️ ¿ESTÁS SEGURO? CLIC DE NUEVO";
-                btn.classList.add('peligo');
-                estadoResetConfirmacion = 1;
-                
-                setTimeout(() => {
-                    if(estadoResetConfirmacion === 1) {
-                        btn.innerText = "🗑️ Limpiar Lista de Usuarios";
-                        btn.classList.remove('peligo');
-                        estadoResetConfirmacion = 0;
-                    }
-                }, 5000);
-            } else if (estadoResetConfirmacion === 1) {
-                alert("Para limpiar el historial completo, vaciá el archivo JSON en el disco.");
-                btn.innerText = "🗑️ Limpiar Lista de Usuarios";
-                btn.classList.remove('peligo');
-                estadoResetConfirmacion = 0;
-            }
-        }
-
-        // ── CONFIGURACIÓN DEL EVENTO VIA ENDPOINT PUENTE (SIN ERRORES 404) ──
-        let _preguntasGeneradas = null;
 
         function cargarConfigActual() {
             fetch('/contenido.json')
                 .then(r => r.json())
                 .then(c => {
-                    document.getElementById('cfg-nombre').value    = c.evento.nombre    || '';
+                    document.getElementById('cfg-nombre').value = c.evento.nombre || '';
                     document.getElementById('cfg-subtitulo').value = c.evento.subtitulo || '';
-                    document.getElementById('cfg-url').value       = c.config.url_publica || '';
+                    document.getElementById('cfg-url').value = c.config.url_publica || '';
                     document.getElementById('url-actual-display').textContent = 'URL actual: ' + (c.config.url_publica || '—');
-                })
-                .catch(() => {});
+                });
         }
 
-        document.getElementById('cfg-url').addEventListener('input', function() {
-            document.getElementById('url-actual-display').textContent = 'Nueva URL: ' + (this.value || '—');
-        });
-
-        // LLAMADA RECONFIGURADA HACIA TU PROPIO BACKEND
+        // ── COMUNICACIÓN CON EL ENDPOINT PUENTE DEL SERVER (EVITA EL ERROR 404) ──
         async function generarConIA() {
-            const tema    = document.getElementById('cfg-tema').value.trim();
-            const nombre  = document.getElementById('cfg-nombre').value.trim();
+            const tema = document.getElementById('cfg-tema').value.trim();
+            if (!tema) { mostrarEstado('Ingresá un tema primero.', 'error'); return; }
 
-            if (!tema) { mostrarEstado('Ingresá un tema para generar las preguntas.', 'error'); return; }
-            if (!nombre) { mostrarEstado('Ingresá el nombre del evento primero.', 'error'); return; }
-
-            mostrarEstado('⏳ Solicitando al servidor backend que procese el tema con la IA... Aguardá unos segundos.', 'generando');
+            mostrarEstado('⏳ Procesando tema en el backend seguro... Aguardá unos segundos.', 'generando');
             document.getElementById('preview-preguntas').style.display = 'none';
             document.getElementById('btn-aplicar-tema').disabled = true;
-            _preguntasGeneradas = null;
 
             try {
-                // Ahora le pega directamente al backend de tu propia app
                 const response = await fetch('/admin/generar-ia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -637,77 +485,53 @@
                 });
 
                 const data = await response.json();
-
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.error || `Status del servidor: ${response.status}`);
-                }
+                if (!response.ok || !data.ok) throw new Error(data.error || 'Falla de respuesta');
 
                 _preguntasGeneradas = data.preguntas;
-                mostrarEstado('✅ ' + data.preguntas.length + ' preguntas generadas correctamente mediante el servidor.', 'ok');
-                mostrarPreview(data.preguntas);
+                mostrarEstado(`✅ ¡${data.preguntas.length} preguntas generadas con éxito!`, 'ok');
+                
+                const lista = document.getElementById('preview-lista');
+                lista.innerHTML = '';
+                data.preguntas.slice(0, 5).forEach((p, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `<div class="pq">${i+1}. ${p.pregunta}</div><div class="pa">✓ ${p.correcta}</div>`;
+                    lista.appendChild(div);
+                });
+                document.getElementById('total-generadas').textContent = data.preguntas.length;
+                document.getElementById('preview-preguntas').style.display = 'block';
+                document.getElementById('btn-aplicar-tema').disabled = false;
 
             } catch (err) {
-                console.error(err);
-                mostrarEstado('❌ Error de comunicación: ' + err.message + '. Asegurate de haber creado la ruta "/admin/generar-ia" en tu archivo del servidor.', 'error');
+                mostrarEstado('❌ Error: ' + err.message, 'error');
             }
-        }
-
-        function mostrarPreview(preguntas) {
-            const lista = document.getElementById('preview-lista');
-            lista.innerHTML = '';
-            preguntas.slice(0, 5).forEach((p, i) => {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-                div.innerHTML = '<div class="pq">' + (i+1) + '. ' + p.pregunta + '</div>' +
-                                '<div class="pa">✓ ' + p.correcta + '</div>';
-                lista.appendChild(div);
-            });
-            document.getElementById('total-generadas').textContent = preguntas.length;
-            document.getElementById('preview-preguntas').style.display = 'block';
-            document.getElementById('btn-aplicar-tema').disabled = false;
         }
 
         async function aplicarTema() {
             if (!_preguntasGeneradas) return;
-
-            const nombre    = document.getElementById('cfg-nombre').value.trim();
-            const subtitulo = document.getElementById('cfg-subtitulo').value.trim();
-            const url       = document.getElementById('cfg-url').value.trim();
-
-            if (!nombre || !url) {
-                mostrarEstado('Completá el nombre del evento y la URL antes de aplicar.', 'error');
-                return;
-            }
-
-            document.getElementById('btn-aplicar-tema').disabled = true;
-            mostrarEstado('⏳ Aplicando cambios al servidor...', 'generando');
+            mostrarEstado('⏳ Guardando nueva configuración en MongoDB Atlas...', 'generando');
 
             try {
                 const resp = await fetch('/admin/cambiar-tema', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        preguntas:       _preguntasGeneradas,
-                        evento_nombre:   nombre,
-                        evento_subtitulo: subtitulo,
-                        url_publica:     url
+                        preguntas: _preguntasGeneradas,
+                        evento_nombre: document.getElementById('cfg-nombre').value.trim(),
+                        evento_subtitulo: document.getElementById('cfg-subtitulo').value.trim(),
+                        url_publica: document.getElementById('cfg-url').value.trim()
                     })
                 });
-
-                const result = await resp.json();
-
-                if (result.ok) {
-                    mostrarEstado('🎉 ' + result.mensaje, 'ok');
-                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + url;
+                const r = await resp.json();
+                if (r.ok) {
+                    mostrarEstado('🎉 ¡Tema y preguntas sincronizadas en la Nube!', 'ok');
                     _preguntasGeneradas = null;
                     document.getElementById('preview-preguntas').style.display = 'none';
                 } else {
-                    mostrarEstado('Error del servidor: ' + result.error, 'error');
-                    document.getElementById('btn-aplicar-tema').disabled = false;
+                    throw new Error(r.error);
                 }
             } catch (err) {
-                mostrarEstado('No se pudo conectar con el servidor: ' + err.message, 'error');
-                document.getElementById('btn-aplicar-tema').disabled = false;
+                mostrarEstado('❌ Error al aplicar: ' + err.message, 'error');
             }
         }
 
@@ -717,6 +541,9 @@
             el.className = 'estado-ia ' + tipo;
             el.style.display = 'block';
         }
+
+        function descargarBaseDatos() { window.open('/ranking_persistente.json', '_blank'); }
+        function ejecutarResetCompleto() { alert('Para limpiar la base histórica, vacía la colección en MongoDB Atlas.'); }
     </script>
 </body>
 </html>
