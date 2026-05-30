@@ -60,6 +60,19 @@
         }
 
         /* ─── HEADER SUPERIOR ─── */
+.logo-header {
+    height: 120px;          /* Ajusta este valor según prefieras el tamaño */
+    width: auto;           /* Mantiene la proporción original */
+    vertical-align: middle;
+    margin-right: 0px;    /* Espacio entre el logo y el texto "Gran Trivia" */
+}
+
+/* Opcional: Asegúrate de que el header mantenga los elementos en línea */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* O flex-start si prefieres que esté a la izquierda */
+}
         .app-header {
             text-align: center;
             padding: 18px 0 12px;
@@ -475,7 +488,7 @@
 
         <!-- HEADER -->
         <div class="app-header">
-            <span class="sol" id="hdr-sol">🎯</span>
+            <img src="images/logo_evento2.png" alt="Logo Evento" class="logo-header">
             <h1 id="hdr-titulo">Gran Trivia</h1>
             <div class="subtitulo" id="hdr-subtitulo">¡Participá y probá tu sabiduría!</div>
         </div>

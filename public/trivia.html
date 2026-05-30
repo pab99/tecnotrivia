@@ -84,6 +84,19 @@
             font-weight: 600;
             line-height: 1.4;
         }
+.logo-header {
+    height: 221px;          /* Ajusta este valor según prefieras el tamaño */
+    width: auto;           /* Mantiene la proporción original */
+    vertical-align: middle;
+    margin-right: 15px;    /* Espacio entre el logo y el texto "Gran Trivia" */
+}
+
+/* Opcional: Asegúrate de que el header mantenga los elementos en línea */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* O flex-start si prefieres que esté a la izquierda */
+}
 
         .contenedor-ranking {
             flex: 2;
@@ -270,7 +283,7 @@
 <body>
 
     <header>
-        <div class="sol-patrio" id="trivia-sol">🎯</div>
+        <img src="images/logo_evento.png" alt="Logo Evento" class="logo-header">
         <h1 id="titulo-principal">Gran Trivia</h1>
     </header>
 
@@ -424,7 +437,7 @@
             contenedorLista.innerHTML = ""; 
 
             if (!cacheJugadores || cacheJugadores.length === 0) {
-                contenedorLista.innerHTML = `<div class="sin-jugadores">${(window._contenido && window._contenido.leaderboard.esperando_jugadores) || 'Esperando que se conecten los primeros patriotas... 🇦🇷'}</div>`;
+                contenedorLista.innerHTML = `<div class="sin-jugadores">${(window._contenido && window._contenido.leaderboard.esperando_jugadores) || 'Esperando jugadores...'}</div>`;
                 return;
             }
 
@@ -467,7 +480,7 @@
 
             const datos = getDatosCuriosos();
             const tituloSQ = (window._contenido && window._contenido.leaderboard.sabiasque_titulo) || '💡 ¿Sabías que...?';
-            const sinDatos = (window._contenido && window._contenido.leaderboard.sin_jugadores) || 'Escaneá el QR para jugar 🇦🇷';
+            const sinDatos = (window._contenido && window._contenido.leaderboard.sin_jugadores) || 'Escaneá el QR para jugar';
 
             if (!datos || datos.length === 0) {
                 contenedorLista.innerHTML = `<div class="sin-jugadores">${sinDatos}</div>`;
@@ -493,7 +506,7 @@
                 paginaActual++;
 
                 if (paginaActual < totalPaginas) {
-                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia de Mayo";
+                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia";
                     if (tituloPrincipal) tituloPrincipal.innerText = `${tituloEvento} (${paginaActual + 1}/${totalPaginas})`;
                     dibujarPaginaRanking();
                 } else {
@@ -509,7 +522,7 @@
                 } else {
                     estadoActual = "ranking";
                     paginaActual = 0;
-                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia de Mayo";
+                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia";
                     if (tituloPrincipal) tituloPrincipal.innerText = totalPaginas > 1 ? `${tituloEvento} (1/${totalPaginas})` : tituloEvento;
                     dibujarPaginaRanking();
                 }
