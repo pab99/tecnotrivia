@@ -29,17 +29,17 @@
     "cargando": "Cargando pregunta..."
   },
   "resultados": {
-    "victoria_titulo": "¡Héroe de la Patria! 🥇🇦🇷",
-    "victoria_mensaje": "¡Felicitaciones! Completaste la ronda de 10 preguntas históricas con éxito.",
-    "derrota_titulo": "¡Derrota Colonial! 🖤",
-    "derrota_mensaje": "Te quedaste sin vidas o el tiempo.",
+    "victoria_titulo": "¡Ronda completada! 🥇",
+    "victoria_mensaje": "¡Felicitaciones! Completaste las 10 preguntas con éxito.",
+    "derrota_titulo": "¡Hasta la próxima! 🖤",
+    "derrota_mensaje": "Te quedaste sin vidas. ¡Volvé a intentarlo!",
     "label_puesto": "Puesto",
     "label_puntaje": "Puntaje",
     "btn_reiniciar": "🔄 Volver a Jugar"
   },
   "leaderboard": {
     "titulo_principal": "Gran Trivia de Mayo",
-    "titulo_dato_historico": "Dato Histórico",
+    "titulo_dato_historico": "¡Más sabés, más ganás!",
     "sabiasque_titulo": "💡 ¿Sabías que...?",
     "btn_sumate": "¡Sumate a Jugar!",
     "instruccion_qr": "Escaneá el código QR con tu celular, ingresá tu Instagram y participá en vivo 🇦🇷",

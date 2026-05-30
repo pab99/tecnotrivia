@@ -268,6 +268,7 @@
                     <button class="btn-dash btn-pdf" onclick="window.print()">🖨️ Imprimir Reporte PDF</button>
                     <button class="btn-dash btn-json" onclick="descargarBaseDatos()">💾 Descargar Base (.json)</button>
                     <button id="btn-reset-sistema" class="btn-dash btn-reset" onclick="ejecutarResetCompleto()">🗑️ Limpiar Lista de Usuarios</button>
+                    <button class="btn-dash" style="background:#8e44ad;" onclick="descargarPreguntas()">📥 Descargar Preguntas Actuales (.json)</button>
                 </div>
 
                 <div class="tarjeta-control">
@@ -655,7 +656,43 @@
         }
 
         function descargarBaseDatos() { window.open('/ranking_persistente.json', '_blank'); }
-        function ejecutarResetCompleto() { alert('Para limpiar la base histórica, vacía la colección en MongoDB Atlas.'); }
+        async function descargarPreguntas() {
+            try {
+                const resp = await fetch('/preguntas_actuales.json');
+                if (!resp.ok) throw new Error('No se pudo obtener las preguntas');
+                const data = await resp.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'preguntas_backup_' + new Date().toISOString().slice(0,10) + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch(err) {
+                alert('Error al descargar: ' + err.message);
+            }
+        }
+        async function ejecutarResetCompleto() {
+            const confirmado = confirm('⚠️ ¿Seguro que querés borrar TODOS los usuarios del ranking?\nEsta acción no se puede deshacer.');
+            if (!confirmado) return;
+            const btn = document.getElementById('btn-reset-sistema');
+            btn.disabled = true;
+            btn.textContent = '⏳ Limpiando...';
+            try {
+                const resp = await fetch('/admin/reset-usuarios', { method: 'POST' });
+                const r = await resp.json();
+                if (r.ok) {
+                    alert('✅ ' + r.mensaje);
+                } else {
+                    throw new Error(r.error);
+                }
+            } catch (err) {
+                alert('❌ Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🗑️ Limpiar Lista de Usuarios';
+            }
+        }
     </script>
 </body>
 </html>
