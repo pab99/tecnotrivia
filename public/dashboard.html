@@ -113,7 +113,6 @@
         .btn-reset { background-color: #7f8c8d; }
         .btn-reset.peligo { background-color: var(--rojo-error); }
 
-        /* 📊 GRÁFICO RECONFIGURADO DE 11 COLUMNAS */
         .grafico-linea {
             background: var(--gris-claro);
             height: 180px;
@@ -205,7 +204,6 @@
             content: ''; position: absolute; width: 6px; height: 6px; background: #95a5a6; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #555;
         }
 
-        /* ── SECCIÓN CAMBIO DE TEMA IA ── */
         .btn-ia { background: linear-gradient(135deg, #6c3483, #a569bd); }
         .btn-aplicar { background: #27ae60; }
         .btn-aplicar:disabled { background: #95a5a6; cursor: not-allowed; }
@@ -254,7 +252,6 @@
             .tabla-auditoria tr { page-break-inside: avoid; page-break-after: auto; }
             .print-footer-fijo { display: flex !important; align-items: center; justify-content: center; gap: 8px; margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; font-size: 0.85rem; color: #000; }
         }
-
         .print-footer-fijo { display: none; }
     </style>
 </head>
@@ -335,7 +332,7 @@
 
         <div class="tarjeta-control" style="width: 100%;">
             <h3>Listado Oficial de Participantes (Ordenado por Ranking Real)</h3>
-            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Datos leídos dinámicamente desde el archivo persistentente.</p>
+            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Datos leídos dinámicamente desde el archivo persistente.</p>
             
             <table class="tabla-auditoria">
                 <thead>
@@ -414,10 +411,13 @@
     </footer>
 
     <script>
-        // Clave máster oficial para llamadas directas
+        // API KEY DE PRODUCTIVIDAD GLOBAL PARA EVITAR ERR 404
         const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
+        const USUARIO_VALIDO = "admin";
+        const CLAVE_VALIDA = "tecnoincas2026";
+        let socket;
 
-        // ── CARGAR CONTENIDO DESDE JSON ──
+        // ── CARGAR CONTENIDO DESDE JSON AL INICIO ──
         fetch('/contenido.json')
             .then(r => r.json())
             .then(c => {
@@ -435,21 +435,25 @@
             })
             .catch(() => {});
 
-        const USUARIO_VALIDO = "admin";
-        const CLAVE_VALIDA = "tecnoincas2026";
-        let socket;
+        // ESCUCHA DE ENTER EN LOS CAMPOS DE LOGIN PARA FACILITAR EL ACCESO
+        document.getElementById('input-clave').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') autenticar();
+        });
 
+        // AUTENTICACIÓN CORREGIDA CON ENMASCARAMIENTO DE INTERFAZ
         function autenticar() {
-            const usr = document.getElementById('input-usuario').value;
-            const pass = document.getElementById('input-clave').value;
+            const usr = document.getElementById('input-usuario').value.trim();
+            const pass = document.getElementById('input-clave').value.trim();
 
             if (usr === USUARIO_VALIDO && pass === CLAVE_VALIDA) {
                 document.getElementById('seccion-login').style.display = 'none';
                 document.getElementById('seccion-dashboard').style.display = 'block';
+                
+                // Inicializaciones obligatorias de datos persistentes
                 inicializarConexionReal();
                 cargarConfigActual();
             } else {
-                alert('Credenciales incorrectas. Verifique los datos.');
+                alert('Credenciales incorrectas. Verifique los datos ingresados.');
             }
         }
 
@@ -463,4 +467,285 @@
             const d = new Date();
             let hh = String(d.getHours()).padStart(2, '0');
             let mm = String(d.getMinutes()).padStart(2, '0');
-            return
+            return `${hh}:${mm}`;
+        }
+
+        function inicializarConexionReal() {
+            // Verificación preventiva por si el script io no cargó en el host
+            if (typeof io === 'undefined') {
+                console.error("Socket.io no está disponible en este entorno de red.");
+                return;
+            }
+
+            socket = io();
+            socket.emit('pedir_ranking_dashboard');
+
+            socket.on('data_ranking_dashboard', (listaJugadores) => {
+                const tbody = document.getElementById('tabla-usuarios-cuerpo');
+                const lblTotal = document.getElementById('lbl-total-usr');
+                const lblMax = document.getElementById('lbl-max-puntos');
+                
+                tbody.innerHTML = "";
+                
+                if (!listaJugadores || listaJugadores.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Nadie ha participado todavía.</td></tr>`;
+                    lblTotal.innerText = "0";
+                    lblMax.innerText = "0 pts";
+                    procesarAnaliticasReales([]);
+                    return;
+                }
+
+                lblTotal.innerText = listaJugadores.length;
+                lblMax.innerText = (listaJugadores[0].puntos || 0) + " pts";
+
+                listaJugadores.forEach((jugador, index) => {
+                    let medalla = "";
+                    if (index === 0) medalla = " 🥇";
+                    else if (index === 1) medalla = " 🥈";
+                    else if (index === 2) medalla = " 🥉";
+
+                    const horaMostrar = obtenerHoraFormateada(jugador);
+                    if (!jugador.hora) jugador.hora = horaMostrar;
+
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td><strong>#${index + 1}</strong>${medalla}</td>
+                        <td>${tokenizeUsername(jugador.username)}</td>
+                        <td class="txt-hora" style="text-align: center;">${horaMostrar} hs</td>
+                        <td class="txt-puntos-tabla" style="text-align: right;">${jugador.puntos || 0} pts</td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+
+                procesarAnaliticasReales(listaJugadores);
+            });
+        }
+
+        function procesarAnaliticasReales(jugadores) {
+            let curva = { h10: 0, h11: 0, h12: 0, h13: 0, h14: 0, h15: 0, h16: 0, h17: 0, h18: 0, h19: 0, h20: 0 };
+            let totalAciertosPerfectos = 0;
+
+            jugadores.forEach((j) => {
+                if (j.puntos >= 50) { 
+                    totalAciertosPerfectos++;
+                }
+
+                if (j.hora) {
+                    let partes = j.hora.split(':');
+                    let horaEntera = parseInt(partes[0], 10);
+
+                    if (horaEntera === 10) curva.h10++;
+                    else if (horaEntera === 11) curva.h11++;
+                    else if (horaEntera === 12) curva.h12++;
+                    else if (horaEntera === 13) curva.h13++;
+                    else if (horaEntera === 14) curva.h14++;
+                    else if (horaEntera === 15) curva.h15++;
+                    else if (horaEntera === 16) curva.h16++;
+                    else if (horaEntera === 17) curva.h17++;
+                    else if (horaEntera === 18) curva.h18++;
+                    else if (horaEntera === 19) curva.h19++;
+                    else if (horaEntera >= 20) curva.h20++;
+                }
+            });
+
+            let picoMaximo = Math.max(curva.h10, curva.h11, curva.h12, curva.h13, curva.h14, curva.h15, curva.h16, curva.h17, curva.h18, curva.h19, curva.h20, 1);
+
+            const horasMapeadas = ['h10', 'h11', 'h12', 'h13', 'h14', 'h15', 'h16', 'h17', 'h18', 'h19', 'h20'];
+            horasMapeadas.forEach((h) => {
+                let elementoBarra = document.getElementById(`curva-${h}`);
+                if (elementoBarra) {
+                    elementoBarra.style.height = `${(curva[h] / picoMaximo) * 100}%`;
+                    elementoBarra.innerText = curva[h];
+                }
+            });
+
+            let total = jugadores.length || 1;
+            let pctAlto = Math.round((totalAciertosPerfectos / total) * 100);
+            let pctBajo = 100 - pctAlto;
+
+            document.getElementById('lbl-pct-alto').innerText = `${pctAlto}%`;
+            document.getElementById('barra-pct-alto').style.width = `${pctAlto}%`;
+
+            document.getElementById('lbl-pct-bajo').innerText = `${pctBajo}%`;
+            document.getElementById('barra-pct-bajo').style.width = `${pctBajo}%`;
+        }
+
+        function descargarBaseDatos() {
+            if(socket) {
+                alert("Extrayendo ranking_persistente.json nativo...");
+                window.open('/ranking_persistente.json', '_blank');
+            }
+        }
+
+        let estadoResetConfirmacion = 0;
+        function ejecutarResetCompleto() {
+            const btn = document.getElementById('btn-reset-sistema');
+            if (estadoResetConfirmacion === 0) {
+                btn.innerText = "⚠️ ¿ESTÁS SEGURO? CLIC DE NUEVO";
+                btn.classList.add('peligo');
+                estadoResetConfirmacion = 1;
+                
+                setTimeout(() => {
+                    if(estadoResetConfirmacion === 1) {
+                        btn.innerText = "🗑️ Limpiar Lista de Usuarios";
+                        btn.classList.remove('peligo');
+                        estadoResetConfirmacion = 0;
+                    }
+                }, 5000);
+            } else if (estadoResetConfirmacion === 1) {
+                alert("Para limpiar el historial completo, vaciá el archivo JSON en el disco.");
+                btn.innerText = "🗑️ Limpiar Lista de Usuarios";
+                btn.classList.remove('peligo');
+                estadoResetConfirmacion = 0;
+            }
+        }
+
+        // ── CONFIGURACIÓN DEL EVENTO VIA GEMINI IA HTTP DIRECTO ──
+        let _preguntasGeneradas = null;
+
+        function cargarConfigActual() {
+            fetch('/contenido.json')
+                .then(r => r.json())
+                .then(c => {
+                    document.getElementById('cfg-nombre').value    = c.evento.nombre    || '';
+                    document.getElementById('cfg-subtitulo').value = c.evento.subtitulo || '';
+                    document.getElementById('cfg-url').value       = c.config.url_publica || '';
+                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + (c.config.url_publica || '—');
+                })
+                .catch(() => {});
+        }
+
+        document.getElementById('cfg-url').addEventListener('input', function() {
+            document.getElementById('url-actual-display').textContent = 'Nueva URL: ' + (this.value || '—');
+        });
+
+        async function generarConIA() {
+            const tema    = document.getElementById('cfg-tema').value.trim();
+            const nombre  = document.getElementById('cfg-nombre').value.trim();
+
+            if (!tema) { mostrarEstado('Ingresá un tema para generar las preguntas.', 'error'); return; }
+            if (!nombre) { mostrarEstado('Ingresá el nombre del evento primero.', 'error'); return; }
+
+            mostrarEstado('⏳ Generando 50 preguntas sobre "' + tema + '" por HTTP directo con Gemini... esto puede tardar unos segundos.', 'generando');
+            document.getElementById('preview-preguntas').style.display = 'none';
+            document.getElementById('btn-aplicar-tema').disabled = true;
+            _preguntasGeneradas = null;
+
+            const promptFinal = `Generá exactamente 50 preguntas de trivia en español sobre el tema: "${tema}".
+Cada pregunta debe tener 1 respuesta correcta y 3 incorrectas.
+Respondé ÚNICAMENTE con un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones.
+El formato de cada elemento debe ser exactamente:
+{"id": N, "pregunta": "...", "correcta": "...", "incorrectas": ["...", "...", "..."]}
+Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las preguntas deben ser variadas y de dificultad progresiva.`;
+
+            try {
+                const urlApi = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+                
+                const response = await fetch(urlApi, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptFinal }] }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error de comunicación con Google Gemini (Status: ${response.status})`);
+                }
+
+                const dataJson = await response.json();
+                
+                if (!dataJson.candidates || !dataJson.candidates[0] || !dataJson.candidates[0].content) {
+                    throw new Error("El modelo no devolvió resultados válidos.");
+                }
+
+                let responseText = dataJson.candidates[0].content.parts[0].text.trim();
+
+                if (responseText.startsWith("```")) {
+                    responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+                }
+
+                const preguntas = JSON.parse(responseText);
+
+                if (!Array.isArray(preguntas) || preguntas.length === 0) {
+                    throw new Error("La estructura devuelta no es una matriz limpia.");
+                }
+
+                _preguntasGeneradas = preguntas;
+                mostrarEstado('✅ ' + preguntas.length + ' preguntas generadas correctamente con Gemini.', 'ok');
+                mostrarPreview(preguntas);
+
+            } catch (err) {
+                console.error(err);
+                mostrarEstado('❌ Error al conectar con la IA: ' + err.message, 'error');
+            }
+        }
+
+        function mostrarPreview(preguntas) {
+            const lista = document.getElementById('preview-lista');
+            lista.innerHTML = '';
+            preguntas.slice(0, 5).forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = '<div class="pq">' + (i+1) + '. ' + p.pregunta + '</div>' +
+                                '<div class="pa">✓ ' + p.correcta + '</div>';
+                lista.appendChild(div);
+            });
+            document.getElementById('total-generadas').textContent = preguntas.length;
+            document.getElementById('preview-preguntas').style.display = 'block';
+            document.getElementById('btn-aplicar-tema').disabled = false;
+        }
+
+        async function aplicarTema() {
+            if (!_preguntasGeneradas) return;
+
+            const nombre    = document.getElementById('cfg-nombre').value.trim();
+            const subtitulo = document.getElementById('cfg-subtitulo').value.trim();
+            const url       = document.getElementById('cfg-url').value.trim();
+
+            if (!nombre || !url) {
+                mostrarEstado('Completá el nombre del evento y la URL antes de aplicar.', 'error');
+                return;
+            }
+
+            document.getElementById('btn-aplicar-tema').disabled = true;
+            mostrarEstado('⏳ Aplicando cambios al servidor...', 'generando');
+
+            try {
+                const resp = await fetch('/admin/cambiar-tema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        preguntas:       _preguntasGeneradas,
+                        evento_nombre:   nombre,
+                        evento_subtitulo: subtitulo,
+                        url_publica:     url
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (result.ok) {
+                    mostrarEstado('🎉 ' + result.mensaje, 'ok');
+                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + url;
+                    _preguntasGeneradas = null;
+                    document.getElementById('preview-preguntas').style.display = 'none';
+                } else {
+                    mostrarEstado('Error del servidor: ' + result.error, 'error');
+                    document.getElementById('btn-aplicar-tema').disabled = false;
+                }
+            } catch (err) {
+                mostrarEstado('No se pudo conectar con el servidor: ' + err.message, 'error');
+                document.getElementById('btn-aplicar-tema').disabled = false;
+            }
+        }
+
+        function mostrarEstado(msg, tipo) {
+            const el = document.getElementById('estado-ia');
+            el.textContent = msg;
+            el.className = 'estado-ia ' + tipo;
+            el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
