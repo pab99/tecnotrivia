@@ -3,53 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control & Analítica - Trivia de Mayo 🇦🇷</title>
+    <title>Panel de Control Profesional & Analítica - Trivia ☀️</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/@google/generative-ai@0.1.1/dist/index.umd.js"></script>
     <style>
         :root {
             --azul-oscuro: #0d2c54;
+            --azul-medio: #1a4a7a;
             --celeste: #74b9ff;
             --amarillo-sol: #fbcb3b;
             --rojo-error: #ff7675;
             --verde-exito: #2ecc71;
             --gris-claro: #f5f6fa;
+            --gris-texto: #546e7a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
+            background: #f0f4f8;
             color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
+        /* Sección de Login Obligatorio */
+        #seccion-login {
+            margin: auto;
+            max-width: 420px;
+            width: 100%;
+            padding: 30px;
+            background: white;
+            border: 3px solid var(--azul-oscuro);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        #seccion-login h2 { color: var(--azul-oscuro); margin-bottom: 10px; }
+        #seccion-login p { color: var(--gris-texto); font-size: 0.9rem; margin-bottom: 20px; }
+
+        /* Contenedor Principal del Dashboard */
         #panel-control {
+            display: none; /* Oculto hasta loguearse */
             flex: 1;
             padding: 20px;
-            max-width: 1200px;
+            max-width: 1300px;
             width: 100%;
-            margin: 20px auto;
+            margin: 10px auto;
+        }
+
+        .header-dashboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--azul-oscuro);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
 
         .menu-pestanas {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid #cbd5e1;
             padding-bottom: 10px;
         }
 
         .btn-pestana {
             padding: 12px 24px;
             border: none;
-            background: #e4e7eb;
+            background: #e2e8f0;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            color: #555;
+            color: #475569;
             transition: all 0.2s;
             display: flex;
             align-items: center;
@@ -57,7 +90,7 @@
         }
 
         .btn-pestana.active {
-            background: var(--azul-oscuro);
+            background: var(--azul-medio);
             color: white;
         }
 
@@ -65,11 +98,12 @@
             background: white;
             padding: 24px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
             margin-bottom: 20px;
-            border: 1px solid #e1e8ed;
+            border: 1px solid #e2e8f0;
         }
 
+        /* Grilla de Métricas Avanzadas */
         .grid-metricas {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -77,12 +111,12 @@
             margin-bottom: 20px;
         }
 
-        .bloque-numero { text-align: center; }
-        .bloque-numero h4 { color: #666; font-size: 0.9rem; margin-bottom: 5px; text-transform: uppercase; }
-        .bloque-numero .valor { font-size: 2.5rem; font-weight: 800; color: var(--azul-oscuro); }
+        .bloque-numero { text-align: center; position: relative; }
+        .bloque-numero h4 { color: var(--gris-texto); font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bloque-numero .valor { font-size: 2.3rem; font-weight: 800; color: var(--azul-oscuro); }
 
         .tabla-ranking { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .tabla-ranking th, .tabla-ranking td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .tabla-ranking th, .tabla-ranking td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         .tabla-ranking th { background: var(--gris-claro); color: var(--azul-oscuro); font-weight: 700; }
 
         .form-grupo { margin-bottom: 15px; }
@@ -91,78 +125,131 @@
             width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; font-family: inherit;
         }
         
+        /* Botonera y Acciones */
+        .area-acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+
         .btn-accion {
-            padding: 14px 28px; background: var(--azul-oscuro); color: white;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;
+            padding: 12px 24px; background: var(--azul-oscuro); color: white;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;
+            display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
         }
+        .btn-accion:hover { background: var(--azul-medio); }
         .btn-accion:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-peligro { background: var(--rojo-error); }
+        .btn-peligro:hover { background: #e25555; }
+        .btn-secundario { background: #475569; }
+        .btn-secundario:hover { background: #334155; }
 
         .estado-ia { padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: 600; display: none; }
         .estado-ia.ok { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .estado-ia.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-        .preview-box { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; max-height: 300px; overflow-y: auto; margin-top: 15px; }
+        .preview-box { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; max-height: 250px; overflow-y: auto; margin-top: 15px; white-space: pre-wrap; }
+        
+        /* Estilos específicos para el Reporte PDF Impreso */
+        #reporte-impresion { padding: 10px; }
+        .pdf-footer { display: none; text-align: center; margin-top: 30px; font-size: 0.8rem; color: var(--gris-texto); }
     </style>
 </head>
 <body>
 
+    <div id="seccion-login">
+        <h2>🔒 Acceso Administrativo</h2>
+        <p>Introduce las credenciales máster para gestionar la auditoría de la trivia.</p>
+        <div class="form-grupo" style="text-align: left;">
+            <label>Usuario Supervisor:</label>
+            <input type="text" id="login-user" value="admin" autocomplete="off">
+        </div>
+        <div class="form-grupo" style="text-align: left;">
+            <label>Contraseña Clave:</label>
+            <input type="password" id="login-pass" placeholder="••••••••">
+        </div>
+        <button id="btn-entrar-login" class="btn-accion" style="width: 100%; justify-content: center; padding: 14px;">Ingresar al Panel Seguro</button>
+        <div id="error-login" style="color: var(--rojo-error); font-weight: bold; margin-top: 10px; display: none;">❌ Credenciales inválidas</div>
+    </div>
+
     <div id="panel-control">
         
-        <!-- Pestañas de Navegación -->
+        <div class="header-dashboard">
+            <div>
+                <h1 id="header-titulo-evento">Cargando evento...</h1>
+                <p id="header-subtitulo-evento">Consola de Control Centralizado</p>
+            </div>
+            <button id="btn-cerrar-sesion" class="btn-accion btn-peligro" style="padding: 8px 16px; font-size: 0.85rem;">🔒 Salir</button>
+        </div>
+        
         <div class="menu-pestanas">
-            <button id="tab-metricas" class="btn-pestana active" onclick="cambiarPestaña('metricas')">📊 Métricas y Monitoreo</button>
-            <button id="tab-ia" class="btn-pestana" onclick="cambiarPestaña('ia')">🤖 Generador de Temas IA Real</button>
+            <button id="tab-metricas" class="btn-pestana active">📊 Métricas y Reportes Ejecutivos</button>
+            <button id="tab-ia" class="btn-pestana">🤖 Generador de Temas IA Real</button>
         </div>
 
-        <!-- Pestaña 1: Métricas en Vivo -->
         <div id="pestana-metricas" class="seccion-pestana">
-            <div class="grid-metricas">
-                <div class="tarjeta bloque-numero">
-                    <h4>Usuarios Conectados</h4>
-                    <div id="m-conectados" class="valor">0</div>
-                </div>
-                <div class="tarjeta bloque-numero">
-                    <h4>Total Jugadores Registrados</h4>
-                    <div id="m-registrados" class="valor">0</div>
-                </div>
-                <div class="tarjeta bloque-numero">
-                    <h4>Puntaje Máximo Alcanzado</h4>
-                    <div id="m-maxpuntos" class="valor">0 Pts</div>
+            
+            <div class="tarjeta">
+                <h3>🛠️ Operaciones Avanzadas e Infraestructura de Datos</h3>
+                <p style="color: var(--gris-texto); font-size: 0.9rem; margin-bottom: 15px;">Gestiona el ciclo de vida de la base de datos de jugadores, descarga respaldos o emite reportes auditados.</p>
+                <div class="area-acciones">
+                    <button id="btn-pdf" class="btn-accion" style="background: #e67e22;">📄 Exportar Reporte PDF Oficial</button>
+                    <button id="btn-json" class="btn-accion btn-secundario">📥 Descargar Base Jugadores (JSON)</button>
+                    <button id="btn-limpiar-db" class="btn-accion btn-peligro">🗑️ Reiniciar Base de Jugadores (Cero Inicial)</button>
                 </div>
             </div>
 
-            <div class="tarjeta">
-                <h3>👥 Monitor de Auditoría y Rendimiento</h3>
-                <table class="tabla-ranking">
-                    <thead>
-                        <tr>
-                            <th>Posición</th>
-                            <th>Usuario (Instagram)</th>
-                            <th>Puntaje Histórico</th>
-                            <th>Puntos Ronda</th>
-                            <th>Vidas Restantes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-usuarios-body">
-                        <tr>
-                            <td colspan="5" style="text-align:center; color:#888;">Esperando datos de la transmisión en tiempo real...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div id="reporte-impresion">
+                <div class="grid-metricas">
+                    <div class="tarjeta bloque-numero">
+                        <h4>Usuarios Conectados / Activos</h4>
+                        <div id="m-conectados" class="valor">0</div>
+                    </div>
+                    <div class="tarjeta bloque-numero">
+                        <h4>Total Participantes Registrados</h4>
+                        <div id="m-registrados" class="valor">0</div>
+                    </div>
+                    <div class="tarjeta bloque-numero">
+                        <h4>Puntaje Máximo Registrado</h4>
+                        <div id="m-maxpuntos" class="valor">0 Pts</div>
+                    </div>
+                    <div class="tarjeta bloque-numero">
+                        <h4>Efectividad / Nivel de Aciertos</h4>
+                        <div id="m-acierto" class="valor">0%</div>
+                    </div>
+                </div>
+
+                <div class="tarjeta">
+                    <h3 id="titulo-tabla-dinamica">👥 Tabla General de Posiciones Auditada</h3>
+                    <p style="font-size: 0.85rem; color: var(--gris-texto); margin-bottom: 10px;" id="pdf-meta-fecha"></p>
+                    <table class="tabla-ranking">
+                        <thead>
+                            <tr>
+                                <th>Posición</th>
+                                <th>Usuario (Instagram)</th>
+                                <th>Puntaje Acumulado</th>
+                                <th>Puntos Ronda</th>
+                                <th>Vidas Restantes</th>
+                                <th>Rendimiento / Aciertos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-usuarios-body">
+                            <tr>
+                                <td colspan="6" style="text-align:center; color:#888; padding: 20px;">Esperando sincronización de datos con el servidor central...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pdf-footer">Reporte Generado de Forma Automatizada - Consola de Auditoría de Trivia Corporativa</div>
             </div>
         </div>
 
-        <!-- Pestaña 2: Generador IA Real conectado a MongoDB -->
         <div id="pestana-ia" class="seccion-pestana" style="display: none;">
             <div class="tarjeta">
-                <h3>🤖 Configuración de Evento e Inyección de Preguntas Reales</h3>
+                <h3>🤖 Inyección de Preguntas mediante Inteligencia Artificial</h3>
                 <p style="color:#666; font-size:0.9rem; margin-bottom: 20px;">
-                    Escribe un tema de interés. El sistema llamará a Google Gemini IA de forma directa y estructurará el cuestionario de 50 preguntas verídicas para tu base de datos.
+                    Define un tema específico para el evento. El motor llamará a Google Gemini e inyectará 50 preguntas reales estructuradas jerárquicamente en tu base de datos de MongoDB Atlas.
                 </p>
 
                 <div class="form-grupo">
                     <label>Nombre Principal del Evento:</label>
-                    <input type="text" id="input-evento-nombre" value="Gran Trivia de Contenido">
+                    <input type="text" id="input-evento-nombre" value="Gran Trivia Temática">
                 </div>
 
                 <div class="form-grupo">
@@ -172,21 +259,21 @@
 
                 <div class="form-grupo">
                     <label>URL Pública del Servidor en Render (Sin barra final):</label>
-                    <input type="text" id="input-url-publica" value="https://tecnotrivia.onrender.com" placeholder="https://tu-app.onrender.com">
+                    <input type="text" id="input-url-publica" value="https://tecnotrivia.onrender.com">
                     <span id="url-actual-display" style="font-size:0.85rem; color:#0288d1; font-weight:bold;"></span>
                 </div>
 
                 <div class="form-grupo">
-                    <label>Escribe el TEMA para el que la IA creará las 50 preguntas y respuestas:</label>
+                    <label>Escribe el TEMA exacto para que la IA diseñe el set de 50 preguntas:</label>
                     <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: La vida, ecosistema e historia migratoria de las ballenas francas en el océano Atlántico..."></textarea>
                 </div>
 
-                <button class="btn-accion" id="btn-generar" onclick="generarPreguntasConIAReal()">Generar 50 Preguntas Reales con Gemini IA</button>
+                <button class="btn-accion" id="btn-generar">Generar 50 Preguntas Reales con Gemini IA</button>
                 
                 <div id="preview-preguntas" style="display:none;">
-                    <h4 style="margin-top:20px; color:var(--azul-oscuro);">📋 Vista Previa del Contenido Real Estructurado por IA:</h4>
+                    <h4 style="margin-top:20px; color:var(--azul-oscuro);">📋 Muestra Estructurada del Contenido Generado (Primeras 3 preguntas):</h4>
                     <div class="preview-box" id="json-preview"></div>
-                    <button class="btn-accion" id="btn-aplicar-tema" style="background:var(--verde-exito); margin-top:15px;" onclick="aplicarTemaEnServidor()">⚡ Guardar Preguntas y Sincronizar en MongoDB Atlas</button>
+                    <button class="btn-accion" id="btn-aplicar-tema" style="background:var(--verde-exito); margin-top:15px;">⚡ Guardar Preguntas y Sincronizar en MongoDB Atlas</button>
                 </div>
 
                 <div id="estado-ia" class="estado-ia"></div>
@@ -195,26 +282,52 @@
 
     </div>
 
-    <!-- Importación del SDK Oficial de Google GenAI para ejecuciones en el Navegador -->
-    <script type="importmap">
-      {
-        "imports": {
-          "@google/generative-ai": "https://esm.run/@google/generative-ai"
-        }
-      }
-    </script>
-
-    <script type="module">
-        import { GoogleGenAI } from '@google/generative-ai';
-        window.GoogleGenAI = GoogleGenAI; // Pasamos la clase al contexto global de forma limpia
-    </script>
-
     <script>
         const socket = io();
         let _preguntasGeneradas = null;
+        let listaJugadoresGlobal = [];
 
-        // Tu API Key de Gemini hardcodeada de forma segura
+        // Clave máster de Gemini proporcionada por el auditor
         const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
+
+        // ASIGNACIÓN TOTAL DE ENLACES AL CARGAR EL DOM
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("btn-entrar-login").addEventListener("click", validarLogin);
+            document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
+            document.getElementById("tab-metricas").addEventListener("click", () => cambiarPestaña('metricas'));
+            document.getElementById("tab-ia").addEventListener("click", () => cambiarPestaña('ia'));
+            document.getElementById("btn-generar").addEventListener("click", generarPreguntasConIAReal);
+            document.getElementById("btn-aplicar-tema").addEventListener("click", aplicarTemaEnServidor);
+            document.getElementById("btn-pdf").addEventListener("click", exportarReportePDF);
+            document.getElementById("btn-json").addEventListener("click", descargarRespaldoJSON);
+            document.getElementById("btn-limpiar-db").addEventListener("click", limpiarBaseDeDatos);
+            
+            document.getElementById("pdf-meta-fecha").textContent = "Fecha de emisión del reporte: " + new Date().toLocaleString();
+        });
+
+        // VALIDACIÓN DE CREDENCIALES ADMINISTRATIVAS
+        function validarLogin() {
+            const user = document.getElementById("login-user").value.trim();
+            const pass = document.getElementById("login-pass").value;
+
+            if (user === "admin" && pass === "admin") {
+                document.getElementById("seccion-login").style.display = "none";
+                document.getElementById("panel-control").style.display = "block";
+                cargarConfigActual();
+                
+                // Activar canal de WebSockets
+                socket.emit('pedir_ranking_dashboard');
+                setInterval(() => { socket.emit('pedir_ranking_dashboard'); }, 4000);
+            } else {
+                alert("❌ Usuario o Contraseña incorrectos.");
+            }
+        }
+
+        function cerrarSesion() {
+            document.getElementById("login-pass").value = "";
+            document.getElementById("panel-control").style.display = "none";
+            document.getElementById("seccion-login").style.display = "block";
+        }
 
         function cambiarPestaña(pestana) {
             document.getElementById('pestana-metricas').style.display = pestana === 'metricas' ? 'block' : 'none';
@@ -224,22 +337,30 @@
             document.getElementById('tab-ia').className = pestana === 'ia' ? 'btn-pestana active' : 'btn-pestana';
         }
 
-        // Sistema de actualización de analíticas en tiempo real
-        socket.emit('pedir_ranking_dashboard');
-        setInterval(() => {
-            socket.emit('pedir_ranking_dashboard');
-        }, 4000);
-
+        // CONTROL DE MÉTRICAS EN TIEMPO REAL VÍA WEBSOCKETS
         socket.on('data_ranking_dashboard', (listaJugadores) => {
+            listaJugadoresGlobal = listaJugadores; 
             document.getElementById('m-registrados').textContent = listaJugadores.length;
             
             let maxPuntos = 0;
             let conectados = 0;
+            let totalRespondidasGenerales = 0;
+            let totalCorrectasGenerales = 0;
             let html = "";
 
             listaJugadores.forEach((j, index) => {
                 if (j.puntos > maxPuntos) maxPuntos = j.puntos;
-                if (j.vidas > 0 && j.respondidas && j.respondidas.length < 10) conectados++;
+                
+                if (j.vidas > 0 && j.respondidas && j.respondidas.length > 0 && j.respondidas.length < 10) {
+                    conectados++;
+                }
+
+                let respondidasUser = (j.respondidas || []).length;
+                let aciertosUser = (j.correctasContadas || 0);
+                totalRespondidasGenerales += respondidasUser;
+                totalCorrectasGenerales += aciertosUser;
+
+                let porcentajeIndividual = respondidasUser > 0 ? Math.round((aciertosUser / respondidasUser) * 100) : 0;
 
                 html += `<tr>
                     <td><b>#${index + 1}</b></td>
@@ -247,29 +368,89 @@
                     <td>${j.puntos} Pts</td>
                     <td>${j.puntosRondaActual || 0} Pts</td>
                     <td>${'❤️'.repeat(Math.max(0, j.vidas)) || '💀 Eliminado'}</td>
+                    <td><b>${porcentajeIndividual}%</b> (${aciertosUser}/${respondidasUser})</td>
                 </tr>`;
             });
 
             document.getElementById('m-maxpuntos').textContent = maxPuntos + " Pts";
             document.getElementById('m-conectados').textContent = conectados;
+            
+            let porcentajeGeneralEfectividad = totalRespondidasGenerales > 0 ? Math.round((totalCorrectasGenerales / totalRespondidasGenerales) * 100) : 0;
+            document.getElementById('m-acierto').textContent = porcentajeGeneralEfectividad + "%";
+
             if(listaJugadores.length > 0) {
                 document.getElementById('tabla-usuarios-body').innerHTML = html;
+            } else {
+                document.getElementById('tabla-usuarios-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">No hay jugadores registrados.</td></tr>`;
             }
         });
 
-        // LLAMADA REAL A LA INTELIGENCIA ARTIFICIAL
-        async function generarPreguntasConIAReal() {
-            const tema = document.getElementById('input-prompt-ia').value.trim();
-            if(!tema) return alert("Por favor escribe un tema o instrucción clara para la IA.");
-
-            document.getElementById('btn-generar').disabled = true;
-            document.getElementById('btn-generar').textContent = "🧠 Gemini IA está redactando las 50 preguntas...";
-            mostrarEstado('Conectando con Google AI Studio. Redactando cuestionario verídico (Esto demora unos 15 segundos)...', 'ok');
+        // REINICIAR JUGADORES A CERO
+        async function limpiarBaseDeDatos() {
+            if (!confirm("⚠️ ATENCIÓN MÁSTER:\n¿Estás completamente seguro de borrar todos los jugadores y vaciar el ranking?\nEsta acción es irreversible.")) return;
 
             try {
-                // Prompt estructurado para garantizar JSON puro sin basura Markdown de la IA
+                const resp = await fetch('/admin/reiniciar-ranking', { method: 'POST' });
+                const resultado = await resp.json();
+                
+                if (resultado.ok) {
+                    alert("🗑️ Base de datos purgada. Servidor sincronizado en cero.");
+                    document.getElementById('m-registrados').textContent = "0";
+                    document.getElementById('m-maxpuntos').textContent = "0 Pts";
+                    document.getElementById('m-acierto').textContent = "0%";
+                    document.getElementById('m-conectados').textContent = "0";
+                } else {
+                    alert("Error: " + resultado.error);
+                }
+            } catch (err) {
+                alert("Error de conexión: " + err.message);
+            }
+        }
+
+        // COPIA DE RESPALDO EN JSON
+        function descargarRespaldoJSON() {
+            if(listaJugadoresGlobal.length === 0) return alert("No hay datos para exportar.");
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(listaJugadoresGlobal, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `respaldo_trivia.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        // GENERACIÓN EXPORTACIÓN PDF
+        function exportarReportePDF() {
+            const elemento = document.getElementById('reporte-impresion');
+            const footer = elemento.querySelector('.pdf-footer');
+            footer.style.display = "block";
+
+            const opciones = {
+                margin:       15,
+                filename:     `Reporte_Auditoria_Trivia.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opciones).from(elemento).save().then(() => {
+                footer.style.display = "none";
+            });
+        }
+
+        // CONEXIÓN DIRECTA CON GEMINI IA
+        async function generarPreguntasConIAReal() {
+            const tema = document.getElementById('input-prompt-ia').value.trim();
+            if(!tema) return alert("Ingresa un tema para que trabaje la Inteligencia Artificial.");
+
+            const btnGen = document.getElementById('btn-generar');
+            btnGen.disabled = true;
+            btnGen.textContent = "🧠 Gemini IA está redactando las 50 preguntas...";
+            mostrarEstado('Procesando instrucciones con Google AI Studio. Aguarda unos 15 segundos...', 'ok');
+
+            try {
                 const promptFinal = `Genera un listado de exactamente 50 preguntas de trivia desafiantes, verídicas e interesantes sobre el siguiente tema: "${tema}".
-                Devuelve OBLIGATORIAMENTE un array JSON puro, sin formatos markdown (absolutamente prohibido usar marcas de bloques \`\`\`json ni texto introductorio), que cumpla estrictamente con esta estructura exacta de campos:
+                Devuelve OBLIGATORIAMENTE un array JSON puro, sin formatos markdown (absolutamente prohibido usar bloques \`\`\`json ni texto introductorio), que cumpla con esta estructura exacta de campos:
                 [
                   {
                     "id": 1,
@@ -280,41 +461,38 @@
                 ]
                 Genera las 50 preguntas incrementando el campo id secuencialmente del 1 al 50. Asegúrate de que las opciones incorrectas sean verosímiles pero falsas.`;
 
-                // Inicialización del Cliente Gemini
-                const genAI = new window.GoogleGenAI({ apiKey: GEMINI_API_KEY });
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // Inicialización correcta usando el SDK cargado globalmente (UMD)
+                const ai = new GoogleGenAI.GoogleGenAI({ apiKey: GEMINI_API_KEY });
+                const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
                 const result = await model.generateContent(promptFinal);
                 let responseText = result.response.text().trim();
 
-                // Limpieza de emergencia por si la IA ignora la orden e inyecta Markdown
+                // Limpieza preventiva si el modelo incluye marcas markdown por inercia
                 if (responseText.startsWith("```")) {
-                    responseText = responseText.replace(/^
-```json\s*/i, "").replace(/```$/, "").trim();
+                    responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
                 }
 
-                // Conversión de string a datos puros de JavaScript
                 _preguntasGeneradas = JSON.parse(responseText);
 
                 if(!Array.isArray(_preguntasGeneradas) || _preguntasGeneradas.length === 0) {
-                    throw new Error("La IA no devolvió un listado de tipo Array estructurado.");
+                    throw new Error("El modelo no devolvió una estructura matricial limpia.");
                 }
 
-                // Renderizado de previsualización con datos reales devueltos
-                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0, 3), null, 2) + `\n\n... [¡Set completo! Se estructuraron las ${_preguntasGeneradas.length} preguntas correctamente]`;
+                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0, 3), null, 2) + `\n\n... [¡Set completado con éxito! Se cargaron las ${_preguntasGeneradas.length} preguntas en memoria]`;
                 document.getElementById('preview-preguntas').style.display = 'block';
-                mostrarEstado(`🎉 ¡Cuestionario de IA generado con éxito! Revisa la muestra y dale al botón de abajo para inyectar en MongoDB Atlas.`, 'ok');
+                mostrarEstado(`🎉 ¡Cuestionario de IA listo! Verificá la muestra y guardalo con el botón verde.`, 'ok');
 
             } catch (err) {
                 console.error(err);
-                mostrarEstado('❌ Error de IA: No se pudo obtener el JSON limpio del modelo. Inténtalo de nuevo. Detalle: ' + err.message, 'error');
+                mostrarEstado('❌ Error de IA: No se pudo obtener el JSON limpio. Revisa el tema e intenta de nuevo. Detalle: ' + err.message, 'error');
             } finally {
-                document.getElementById('btn-generar').disabled = false;
-                document.getElementById('btn-generar').textContent = "Generar 50 Preguntas Reales con Gemini IA";
+                btnGen.disabled = false;
+                btnGen.textContent = "Generar 50 Preguntas Reales con Gemini IA";
             }
         }
 
-        // Persistencia e inyección hacia MongoDB Atlas mediante tu endpoint administrativo del backend
+        // GUARDADO FINAL EN MONGODB ATLAS
         async function aplicarTemaEnServidor() {
             if(!_preguntasGeneradas) return;
 
@@ -322,8 +500,9 @@
             const subtitulo = document.getElementById('input-evento-subtitulo').value;
             const url = document.getElementById('input-url-publica').value;
 
-            document.getElementById('btn-aplicar-tema').disabled = true;
-            mostrarEstado('Conectando servidor -> Subiendo datos a tu Cluster de MongoDB Atlas...', 'ok');
+            const btnAplicar = document.getElementById('btn-aplicar-tema');
+            btnAplicar.disabled = true;
+            mostrarEstado('Subiendo datos y sincronizando tu Cluster de MongoDB Atlas...', 'ok');
 
             try {
                 const resp = await fetch('/admin/cambiar-tema', {
@@ -340,17 +519,19 @@
                 const result = await resp.json();
 
                 if (result.ok) {
-                    mostrarEstado('🚀 ¡Espectacular! Datos guardados en MongoDB. ' + result.mensaje, 'ok');
-                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + url;
+                    mostrarEstado('🚀 ¡Excelente! Cuestionario inyectado en MongoDB y sincronizado con las pantallas.', 'ok');
+                    document.getElementById('url-actual-display').textContent = 'URL activa: ' + url;
+                    document.getElementById('header-titulo-evento').textContent = nombre;
+                    document.getElementById('header-subtitulo-evento').textContent = subtitulo;
                     _preguntasGeneradas = null;
                     document.getElementById('preview-preguntas').style.display = 'none';
                 } else {
-                    mostrarEstado('Error devuelto por el backend: ' + result.error, 'error');
-                    document.getElementById('btn-aplicar-tema').disabled = false;
+                    mostrarEstado('Error: ' + result.error, 'error');
+                    btnAplicar.disabled = false;
                 }
             } catch (err) {
-                mostrarEstado('No se pudo establecer conexión con el servidor: ' + err.message, 'error');
-                document.getElementById('btn-aplicar-tema').disabled = false;
+                mostrarEstado('Error de red: ' + err.message, 'error');
+                btnAplicar.disabled = false;
             }
         }
 
@@ -358,11 +539,15 @@
             try {
                 const r = await fetch('/contenido.json');
                 const data = await r.json();
-                if(data && data.config) {
+                if(data) {
+                    document.getElementById('header-titulo-evento').textContent = data.evento.nombre || 'Gran Trivia';
+                    document.getElementById('header-subtitulo-evento').textContent = data.evento.subtitulo || 'Consola de Control';
                     document.getElementById('input-evento-nombre').value = data.evento.nombre || '';
                     document.getElementById('input-evento-subtitulo').value = data.evento.subtitulo || '';
-                    document.getElementById('input-url-publica').value = data.config.url_publica || '';
-                    document.getElementById('url-actual-display').textContent = 'URL activa detectada: ' + (data.config.url_publica || '—');
+                    if(data.config) {
+                        document.getElementById('input-url-publica').value = data.config.url_publica || '';
+                        document.getElementById('url-actual-display').textContent = 'URL activa: ' + (data.config.url_publica || '—');
+                    }
                 }
             } catch(e){}
         }
@@ -373,8 +558,6 @@
             el.className = 'estado-ia ' + tipo;
             el.style.display = 'block';
         }
-
-        cargarConfigActual();
     </script>
 </body>
 </html>
