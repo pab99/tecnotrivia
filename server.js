@@ -343,6 +343,7 @@ app.post('/admin/actualizar-config', async (req, res) => {
         if (emoji_2 !== undefined) contenido.evento.emoji_2 = emoji_2;
         if (emoji_3 !== undefined) contenido.evento.emoji_3 = emoji_3;
         contenido.evento.emojis_header = [emoji_1, emoji_2, emoji_3].filter(Boolean).join(' ') || contenido.evento.emojis_header;
+        if (emoji_1) contenido.evento.emoji_principal = emoji_1;
 
         if (dbConfig) {
             await dbConfig.updateOne(
