@@ -6,7 +6,6 @@
     <title>Panel de Control Profesional & Analítica - Trivia ☀️</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://unpkg.com/@google/generative-ai@0.1.1/dist/index.umd.js"></script>
     <style>
         :root {
             --azul-oscuro: #0d2c54;
@@ -197,7 +196,7 @@
 
             <div id="reporte-impresion">
                 <div class="grid-metricas">
-                    <div class="tarjeta bloque-numero">
+                    <div class="tarjeta Schuyler bloque-numero">
                         <h4>Usuarios Conectados / Activos</h4>
                         <div id="m-conectados" class="valor">0</div>
                     </div>
@@ -244,7 +243,7 @@
             <div class="tarjeta">
                 <h3>🤖 Inyección de Preguntas mediante Inteligencia Artificial</h3>
                 <p style="color:#666; font-size:0.9rem; margin-bottom: 20px;">
-                    Define un tema específico para el evento. El motor llamará a Google Gemini e inyectará 50 preguntas reales estructuradas jerárquicamente en tu base de datos de MongoDB Atlas.
+                    Define un tema específico para el evento. El motor llamará a Google Gemini de forma directa e inyectará 50 preguntas reales estructuradas jerárquicamente en tu base de datos de MongoDB Atlas.
                 </p>
 
                 <div class="form-grupo">
@@ -287,7 +286,7 @@
         let _preguntasGeneradas = null;
         let listaJugadoresGlobal = [];
 
-        // Clave máster de Gemini proporcionada por el auditor
+        // Clave máster oficial para llamadas directas sin SDK intermedio
         const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
 
         // ASIGNACIÓN TOTAL DE ENLACES AL CARGAR EL DOM
@@ -305,12 +304,12 @@
             document.getElementById("pdf-meta-fecha").textContent = "Fecha de emisión del reporte: " + new Date().toLocaleString();
         });
 
-        // VALIDACIÓN DE CREDENCIALES ADMINISTRATIVAS
+        // VALIDACIÓN DE CREDENCIALES ADMINISTRATIVAS (Clave Real)
         function validarLogin() {
             const user = document.getElementById("login-user").value.trim();
             const pass = document.getElementById("login-pass").value;
 
-            if (user === "admin" && pass === "admin") {
+            if (user === "admin" && pass === "tecnoincas2026") {
                 document.getElementById("seccion-login").style.display = "none";
                 document.getElementById("panel-control").style.display = "block";
                 cargarConfigActual();
@@ -387,7 +386,7 @@
 
         // REINICIAR JUGADORES A CERO
         async function limpiarBaseDeDatos() {
-            if (!confirm("⚠️ ATENCIÓN MÁSTER:\n¿Estás completamente seguro de borrar todos los jugadores y vaciar el ranking?\nEsta acción es irreversible.")) return;
+            if (!confirm("⚠️ ATENCIÓN MÁSTER:\n¿Estás completamente seguro de borrar todos los jugadores de MongoDB Atlas y vaciar el ranking?\nEsta acción es irreversible.")) return;
 
             try {
                 const resp = await fetch('/admin/reiniciar-ranking', { method: 'POST' });
@@ -438,7 +437,7 @@
             });
         }
 
-        // CONEXIÓN DIRECTA CON GEMINI IA
+        // LLAMADA DIRECTA HTTP A GEMINI (Indestructible, sin librerías externas rotas)
         async function generarPreguntasConIAReal() {
             const tema = document.getElementById('input-prompt-ia').value.trim();
             if(!tema) return alert("Ingresa un tema para que trabaje la Inteligencia Artificial.");
@@ -446,7 +445,7 @@
             const btnGen = document.getElementById('btn-generar');
             btnGen.disabled = true;
             btnGen.textContent = "🧠 Gemini IA está redactando las 50 preguntas...";
-            mostrarEstado('Procesando instrucciones con Google AI Studio. Aguarda unos 15 segundos...', 'ok');
+            mostrarEstado('Conectando directamente por HTTP con Google AI Studio. Aguarda unos 15 segundos...', 'ok');
 
             try {
                 const promptFinal = `Genera un listado de exactamente 50 preguntas de trivia desafiantes, verídicas e interesantes sobre el siguiente tema: "${tema}".
@@ -461,12 +460,25 @@
                 ]
                 Genera las 50 preguntas incrementando el campo id secuencialmente del 1 al 50. Asegúrate de que las opciones incorrectas sean verosímiles pero falsas.`;
 
-                // Inicialización correcta usando el SDK cargado globalmente (UMD)
-                const ai = new GoogleGenAI.GoogleGenAI({ apiKey: GEMINI_API_KEY });
-                const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // Petición nativa directa a la API de Google Gemini 1.5 Flash
+                const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
                 
-                const result = await model.generateContent(promptFinal);
-                let responseText = result.response.text().trim();
+                const response = await fetch(urlApi, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptFinal }] }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error! Status: ${response.status}`);
+                }
+
+                const dataJson = await response.json();
+                
+                // Mapeo seguro del árbol de respuesta oficial de Google
+                let responseText = dataJson.candidates[0].content.parts[0].text.trim();
 
                 // Limpieza preventiva si el modelo incluye marcas markdown por inercia
                 if (responseText.startsWith("```")) {
@@ -485,7 +497,7 @@
 
             } catch (err) {
                 console.error(err);
-                mostrarEstado('❌ Error de IA: No se pudo obtener el JSON limpio. Revisa el tema e intenta de nuevo. Detalle: ' + err.message, 'error');
+                mostrarEstado('❌ Error de IA: No se pudo procesar el JSON limpio. Detalle: ' + err.message, 'error');
             } finally {
                 btnGen.disabled = false;
                 btnGen.textContent = "Generar 50 Preguntas Reales con Gemini IA";
