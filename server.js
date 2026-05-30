@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -194,62 +193,44 @@ Generar exactamente 50 preguntas.
             throw new Error('OPENROUTER_API_KEY no configurada');
         }
  
-        const modelos = [
-            'qwen/qwen3-235b-a22b:free',
-            'deepseek/deepseek-r1:free',
-            'mistralai/mistral-small-3.2-24b-instruct:free'
-        ];
+        console.log(`🤖 Llamando a OpenRouter (router automático de modelos gratuitos)...`);
  
-        let contenidoIA = null;
-        let ultimoError = '';
- 
-        for (const modelo of modelos) {
- 
-            console.log(`🤖 Probando ${modelo}`);
- 
-            const response = await fetch(
-                'https://openrouter.ai/api/v1/chat/completions',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: modelo,
-                        messages: [
-                            {
-                                role: 'user',
-                                content: promptFinal
-                            }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 8000
-                    })
-                }
-            );
- 
-            if (response.ok) {
- 
-                const data = await response.json();
- 
-                contenidoIA =
-                    data?.choices?.[0]?.message?.content || null;
- 
-                if (contenidoIA) {
-                    console.log(`✅ Usando ${modelo}`);
-                    break;
-                }
+        const response = await fetch(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'openrouter/free',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: promptFinal
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 8000
+                })
             }
+        );
  
-            ultimoError = await response.text();
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenRouter error ${response.status}: ${errorText}`);
         }
+ 
+        const data = await response.json();
+        const modeloUsado = data?.model || 'desconocido';
+        let contenidoIA = data?.choices?.[0]?.message?.content || null;
  
         if (!contenidoIA) {
-            throw new Error(
-                `Ningún modelo respondió correctamente. ${ultimoError}`
-            );
+            throw new Error('OpenRouter no devolvió contenido en la respuesta.');
         }
+ 
+        console.log(`✅ Respuesta recibida via modelo: ${modeloUsado}`);
  
         contenidoIA = contenidoIA
             .replace(/```json/gi, '')
