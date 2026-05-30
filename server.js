@@ -140,9 +140,66 @@ app.get('/ranking_persistente.json', (req, res) => {
     res.json(listaCompleta);
 });
 
-// ── ENDPOINT ADMIN: Cambiar tema guardando directamente en MongoDB ──────────────────────────
+// ── CONFIGURACIÓN DE PARSERS Y MIDDLEWARES DE ADMIN ─────────────────────────
 app.use(express.json({ limit: '500kb' }));
 
+// ── NUEVO ENDPOINT PUENTE: Generar preguntas usando Gemini de manera segura ──
+app.post('/admin/generar-ia', async (req, res) => {
+    try {
+        const { tema } = req.body;
+        if (!tema) {
+            return res.status(400).json({ ok: false, error: 'Falta especificar el tema de la trivia.' });
+        }
+
+        const promptFinal = `Generá exactamente 50 preguntas de trivia en español sobre el tema: "${tema}".
+Cada pregunta debe tener 1 respuesta correcta y 3 incorrectas.
+Respondé ÚNICAMENTE con un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones.
+El formato de cada elemento debe ser exactamente:
+{"id": N, "pregunta": "...", "correcta": "...", "incorrectas": ["...", "...", "..."]}
+Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las preguntas deben ser variadas y de dificultad progresiva.`;
+
+        // Clave del entorno global provista por el cliente
+        const API_KEY_REAL = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A"; 
+        
+        // Endpoint corregido de v1 a v1beta (Resuelve el error 404 de raíz)
+        const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY_REAL}`;
+
+        const response = await fetch(urlApi, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptFinal }] }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Google Gemini API respondió con código de estado HTTP: ${response.status}`);
+        }
+
+        const dataJson = await response.json();
+        
+        if (!dataJson.candidates || !dataJson.candidates[0] || !dataJson.candidates[0].content) {
+            throw new Error("La IA de Google devolvió una estructura de datos vacía o inválida.");
+        }
+
+        let responseText = dataJson.candidates[0].content.parts[0].text.trim();
+
+        // Eliminar forzados de código markdown si los añade el modelo
+        if (responseText.startsWith("```")) {
+            responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+        }
+
+        const preguntasValidadas = JSON.parse(responseText);
+        
+        return res.json({ ok: true, preguntas: preguntasValidadas });
+
+    } catch (err) {
+        console.error("❌ Error en puente de IA interno:", err.message);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+// ── ENDPOINT ADMIN: Cambiar tema guardando directamente en MongoDB ──────────────────────────
 app.post('/admin/cambiar-tema', async (req, res) => {
     try {
         const { preguntas, evento_nombre, evento_subtitulo, url_publica } = req.body;
