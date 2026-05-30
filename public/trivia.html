@@ -35,17 +35,40 @@
             overflow: hidden;
         }
 
-        .pantalla-layout {
+        /* ── LAYOUT PRINCIPAL ── */
+        .layout-principal {
             display: flex;
             width: 100%;
             max-width: 1350px;
             gap: 30px;
-            align-items: flex-start;
-            margin-top: 10px;
+            align-items: stretch;
             flex: 1;
+            margin-top: 10px;
+        }
+
+        /* ── COLUMNA IZQUIERDA: logo + QR + instagram ── */
+        .columna-izquierda {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .logo-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 12px;
+        }
+
+        .logo-header {
+            height: 160px;
+            width: auto;
         }
 
         .bloque-qr-acceso {
+            width: 100%;
             flex: 1;
             background: var(--blanco);
             border: 4px solid var(--azul-oscuro);
@@ -57,7 +80,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 520px;
         }
 
         .bloque-qr-acceso h2 {
@@ -74,32 +96,36 @@
             border: 2px solid #ced4da;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
             margin-bottom: 20px;
-            min-width: 260px;
-            min-height: 260px;
+            min-width: 240px;
+            min-height: 240px;
         }
 
         .bloque-qr-acceso p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #57606f;
             font-weight: 600;
             line-height: 1.4;
         }
-.logo-header {
-    height: 221px;          /* Ajusta este valor según prefieras el tamaño */
-    width: auto;           /* Mantiene la proporción original */
-    vertical-align: middle;
-    margin-right: 15px;    /* Espacio entre el logo y el texto "Gran Trivia" */
-}
 
-/* Opcional: Asegúrate de que el header mantenga los elementos en línea */
-header {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* O flex-start si prefieres que esté a la izquierda */
-}
+        /* ── COLUMNA DERECHA: título + ranking/datos ── */
+        .columna-derecha {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .titulo-ranking {
+            font-size: 2.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--azul-oscuro);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 12px;
+        }
 
         .contenedor-ranking {
-            flex: 2;
+            flex: 1;
             background: var(--blanco);
             border: 4px solid var(--azul-oscuro);
             border-radius: 24px;
@@ -108,22 +134,6 @@ header {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            min-height: 520px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 15px;
-            width: 100%;
-        }
-
-        header h1 {
-            font-size: 3rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--azul-oscuro);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 5px;
         }
 
         .sol-patrio {
@@ -282,26 +292,34 @@ header {
 </head>
 <body>
 
-    <header>
-        <img src="images/logo_evento.png" alt="Logo Evento" class="logo-header">
-        <h1 id="titulo-principal">Gran Trivia</h1>
-    </header>
+    <!-- Layout principal: logo izq + columnas -->
+    <div class="layout-principal">
 
-    <div class="pantalla-layout">
-        <!-- Bloque de Acceso Izquierdo -->
-        <div class="bloque-qr-acceso">
-            <h2 id="ldb-btn-sumate">¡Sumate a Jugar!</h2>
-            <div id="contenedor-qr"></div>
-            <p id="ldb-instruccion-qr">Escaneá el código QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷</p>
-            <div id="trivia-instagram" style="margin-top:10px; font-size:0.9rem; color:#ccc; text-align:center; display:none;">
-                📸 Seguinos en Instagram <strong id="trivia-instagram-usuario"></strong>
+        <!-- Columna izquierda: logo + QR + instagram -->
+        <div class="columna-izquierda">
+            <div class="logo-wrap">
+                <img src="images/logo_evento.png" alt="Logo Evento" class="logo-header">
+            </div>
+            <div class="bloque-qr-acceso">
+                <h2 id="ldb-btn-sumate">¡Sumate a Jugar!</h2>
+                <div id="contenedor-qr"></div>
+                <p id="ldb-instruccion-qr">Escaneá el código QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷</p>
+            </div>
+            <!-- Instagram: solo visible cuando hay datos curiosos (no ranking) -->
+            <div id="trivia-instagram" style="display:none; text-align:center; padding: 12px 0 4px 0; line-height:1.2;">
+                <div style="font-size:0.95rem; font-weight:700; color:#57606f; text-transform:uppercase; letter-spacing:1px;">📸 Seguinos en Instagram</div>
+                <div id="trivia-instagram-usuario" style="font-size:2.2rem; font-weight:900; color:#0d2c54;"></div>
             </div>
         </div>
 
-        <!-- Contenedor del Ranking Derecho con ID corregido -->
-        <div class="contenedor-ranking" id="lista-leaderboard">
-            <div class="sin-jugadores">Esperando que se conecten los primeros patriotas... 🇦🇷</div>
+        <!-- Columna derecha: título + contenido -->
+        <div class="columna-derecha">
+            <h1 id="titulo-principal" class="titulo-ranking">Gran Trivia</h1>
+            <div class="contenedor-ranking" id="lista-leaderboard">
+                <div class="sin-jugadores">Esperando que se conecten los primeros patriotas... 🇦🇷</div>
+            </div>
         </div>
+
     </div>
 
     <footer>
@@ -327,7 +345,7 @@ header {
                 document.getElementById('footer-ldb').textContent = c.evento.footer;
                 if (c.evento && c.evento.instagram_usuario) {
                     document.getElementById('trivia-instagram-usuario').textContent = c.evento.instagram_usuario;
-                    document.getElementById('trivia-instagram').style.display = 'block';
+                    // No mostrar todavía: se muestra solo en modo datos curiosos
                 }
                 // Leer ciclos de curiosidades desde el JSON
                 if (ldb.ciclos_curiosidades) CICLOS_SABIAS_QUE = ldb.ciclos_curiosidades;
@@ -521,6 +539,8 @@ header {
                     contadorCiclosSabiasQue = 1;
                     if (tituloPrincipal) tituloPrincipal.innerText = (window._contenido && window._contenido.leaderboard.titulo_dato_historico) || "Datos Curiosos 🧠";
                     mostrarDatoCuriosoUI();
+                    const igEl = document.getElementById('trivia-instagram');
+                    if (igEl && igEl.querySelector('#trivia-instagram-usuario').textContent) igEl.style.display = 'block';
                 }
             } else {
                 if (contadorCiclosSabiasQue < CICLOS_SABIAS_QUE) {
@@ -529,6 +549,8 @@ header {
                 } else {
                     estadoActual = "ranking";
                     paginaActual = 0;
+                    const igElHide = document.getElementById('trivia-instagram');
+                    if (igElHide) igElHide.style.display = 'none';
                     const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia";
                     if (tituloPrincipal) tituloPrincipal.innerText = totalPaginas > 1 ? `${tituloEvento} (1/${totalPaginas})` : tituloEvento;
                     dibujarPaginaRanking();
