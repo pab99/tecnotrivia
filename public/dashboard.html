@@ -229,6 +229,15 @@
         .estado-ia.error { background: #fdedec; color: #c0392b; border: 1px solid #f5b7b1; }
         .url-actual { font-size: 0.8rem; color: #7f8c8d; font-family: monospace; }
         .separador-tema { border: none; border-top: 2px dashed #e0d5f0; margin: 16px 0; }
+        .btn-upload { background: linear-gradient(135deg, #1a6b3c, #27ae60); }
+        .upload-zona {
+            border: 2px dashed #27ae60; border-radius: 10px;
+            padding: 16px; text-align: center; margin-top: 12px;
+            background: #f0faf5; cursor: pointer; transition: background 0.2s;
+        }
+        .upload-zona:hover { background: #d5f5e3; }
+        .upload-zona.arrastrando { background: #a9dfbf; border-color: #1e8449; }
+        .upload-info { font-size: 0.82rem; color: #555; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -342,6 +351,20 @@
                 <input id="cfg-url" class="campo-tema" placeholder="[https://mi-trivia.onrender.com](https://mi-trivia.onrender.com)">
                 <div class="url-actual" id="url-actual-display">Cargando URL actual...</div>
             </div>
+
+            <hr class="separador-tema">
+
+            <label style="font-size:0.82rem; font-weight:700; color:#555;">📂 Cargar preguntas desde archivo JSON local</label>
+            <div class="upload-zona" id="upload-zona" onclick="document.getElementById('input-json').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                <div style="font-size:1.8rem;">📁</div>
+                <div style="font-weight:700; color:#1a6b3c;">Hacé clic o arrastrá tu archivo .json aquí</div>
+                <div class="upload-info" id="upload-info">Formato esperado: array de preguntas con id, pregunta, correcta, incorrectas[]</div>
+            </div>
+            <input type="file" id="input-json" accept=".json" style="display:none" onchange="cargarJsonLocal(event)">
+
+            <button class="btn-dash btn-upload" id="btn-subir-json" onclick="subirJsonAMongo()" disabled style="margin-top: 12px;">
+                ☁️ Subir JSON a MongoDB y Aplicar
+            </button>
 
             <hr class="separador-tema">
 
@@ -532,6 +555,95 @@
                 }
             } catch (err) {
                 mostrarEstado('❌ Error al aplicar: ' + err.message, 'error');
+            }
+        }
+
+        // ── CARGA DE JSON LOCAL ──────────────────────────────────────
+        let _preguntasDesdeArchivo = null;
+
+        function onDragOver(e) {
+            e.preventDefault();
+            document.getElementById('upload-zona').classList.add('arrastrando');
+        }
+        function onDragLeave(e) {
+            document.getElementById('upload-zona').classList.remove('arrastrando');
+        }
+        function onDrop(e) {
+            e.preventDefault();
+            document.getElementById('upload-zona').classList.remove('arrastrando');
+            const file = e.dataTransfer.files[0];
+            if (file) procesarArchivoJson(file);
+        }
+        function cargarJsonLocal(event) {
+            const file = event.target.files[0];
+            if (file) procesarArchivoJson(file);
+        }
+        function procesarArchivoJson(file) {
+            if (!file.name.endsWith('.json')) {
+                mostrarEstado('❌ El archivo debe ser .json', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error('El JSON debe ser un array de preguntas.');
+                    if (data.length < 5) throw new Error('Se necesitan al menos 5 preguntas.');
+                    // Validar estructura mínima
+                    const muestra = data[0];
+                    if (!muestra.pregunta || !muestra.correcta || !Array.isArray(muestra.incorrectas)) {
+                        throw new Error('Estructura inválida. Cada pregunta necesita: pregunta, correcta, incorrectas[]');
+                    }
+                    // Asignar ids si faltan
+                    data.forEach((p, i) => { if (!p.id) p.id = i + 1; });
+                    _preguntasDesdeArchivo = data;
+                    document.getElementById('upload-info').textContent = `✅ ${data.length} preguntas cargadas desde "${file.name}"`;
+                    document.getElementById('upload-zona').style.borderColor = '#1e8449';
+                    document.getElementById('btn-subir-json').disabled = false;
+                    mostrarEstado(`📂 Archivo listo: ${data.length} preguntas. Completá el nombre del evento y hacé clic en "Subir JSON a MongoDB".`, 'ok');
+                } catch (err) {
+                    mostrarEstado('❌ Error en el archivo: ' + err.message, 'error');
+                    _preguntasDesdeArchivo = null;
+                    document.getElementById('btn-subir-json').disabled = true;
+                }
+            };
+            reader.readAsText(file);
+        }
+        async function subirJsonAMongo() {
+            if (!_preguntasDesdeArchivo) return;
+            const nombre = document.getElementById('cfg-nombre').value.trim();
+            const subtitulo = document.getElementById('cfg-subtitulo').value.trim();
+            const url = document.getElementById('cfg-url').value.trim();
+            if (!nombre || !url) {
+                mostrarEstado('❌ Completá el nombre del evento y la URL pública antes de subir.', 'error');
+                return;
+            }
+            mostrarEstado('⏳ Subiendo preguntas a MongoDB Atlas...', 'generando');
+            document.getElementById('btn-subir-json').disabled = true;
+            try {
+                const resp = await fetch('/admin/cambiar-tema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        preguntas: _preguntasDesdeArchivo,
+                        evento_nombre: nombre,
+                        evento_subtitulo: subtitulo,
+                        url_publica: url
+                    })
+                });
+                const r = await resp.json();
+                if (r.ok) {
+                    mostrarEstado(`🎉 ¡${_preguntasDesdeArchivo.length} preguntas subidas y aplicadas en la Nube!`, 'ok');
+                    _preguntasDesdeArchivo = null;
+                    document.getElementById('upload-info').textContent = 'Formato esperado: array de preguntas con id, pregunta, correcta, incorrectas[]';
+                    document.getElementById('upload-zona').style.borderColor = '#27ae60';
+                    document.getElementById('input-json').value = '';
+                } else {
+                    throw new Error(r.error);
+                }
+            } catch (err) {
+                mostrarEstado('❌ Error al subir: ' + err.message, 'error');
+                document.getElementById('btn-subir-json').disabled = false;
             }
         }
 
