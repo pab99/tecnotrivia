@@ -1,22 +1,22 @@
 {
   "config": {
-    "url_publica": "https://trivia25demayo.onrender.com",
+    "url_publica": "https://tecnotrivia.onrender.com",
     "mongo_db": "trivia_mayo_db",
     "mongo_col": "ranking"
   },
   "evento": {
-    "nombre": "Gran Trivia de Mayo",
+    "nombre": "Gran Trivia",
     "edicion": "2025",
-    "emoji_principal": "☀️",
-    "emojis_header": "🇦🇷 🏛️ ☀️ 🇦🇷",
-    "subtitulo": "Revolución de Mayo",
+    "emoji_principal": "🎯",
+    "emojis_header": "🎯 ⭐ 🎯",
+    "subtitulo": "¡Participá y probá tu sabiduría!",
     "footer": "(R) Tecnoincas.com.ar",
-    "emoji_1": "🇦🇷",
-    "emoji_2": "🏛️",
-    "emoji_3": "☀️"
+    "emoji_1": "🎯",
+    "emoji_2": "⭐",
+    "emoji_3": "🎯"
   },
   "login": {
-    "titulo": "¡Gran Trivia de Mayo!",
+    "titulo": "¡Gran Trivia!",
     "subtitulo": "Ingresá tu usuario de Instagram para aparecer en la pantalla gigante",
     "placeholder_input": "@tu_usuario",
     "btn_ingresar": "INGRESAR",
@@ -41,13 +41,13 @@
     "btn_reiniciar": "🔄 Volver a Jugar"
   },
   "leaderboard": {
-    "titulo_principal": "Gran Trivia de Mayo",
+    "titulo_principal": "Gran Trivia",
     "titulo_dato_historico": "Datos Curiosos 🧠",
     "sabiasque_titulo": "💡 ¿Sabías que...?",
     "btn_sumate": "¡Sumate a Jugar!",
-    "instruccion_qr": "Escaneá el código QR con tu celular, ingresá tu Instagram y participá en vivo 🇦🇷",
-    "sin_jugadores": "Escaneá el QR para jugar 🇦🇷",
-    "esperando_jugadores": "Escaneá el QR para jugar 🇦🇷",
+    "instruccion_qr": "Escaneá el código QR con tu celular, ingresá tu Instagram y participá en vivo",
+    "sin_jugadores": "Escaneá el QR para jugar",
+    "esperando_jugadores": "Escaneá el QR para jugar",
     "ciclos_curiosidades": 4
   },
   "dashboard": {

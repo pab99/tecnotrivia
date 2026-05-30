@@ -17,6 +17,11 @@ const io = new Server(server, {
     transports: ['polling', 'websocket'] 
 });
 
+app.get('/contenido.json', (req, res) => {
+    console.log(`📄 /contenido.json → nombre: "${contenido.evento.nombre}" | emoji_1: "${contenido.evento.emoji_1}"`);
+    res.json(contenido);
+});
+
 app.use(express.static('public'));
 
 // Variables globales de configuración y estado en memorias
@@ -121,10 +126,7 @@ async function guardarRankingEnNube(username) {
 }
 
 // Servir la configuración actualizada (prioriza memoria dinámica)
-app.get('/contenido.json', (req, res) => {
-    console.log(`📄 /contenido.json → nombre: "${contenido.evento.nombre}" | emoji_1: "${contenido.evento.emoji_1}"`);
-    res.json(contenido);
-});
+// [endpoint movido arriba]
 
 // Servir datos curiosos generados dinámicamente desde las preguntas activas
 app.get('/datos_curiosos.json', (req, res) => {
