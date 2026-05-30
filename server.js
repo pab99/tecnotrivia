@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -187,49 +188,68 @@ Formato EXACTO:
 Generar exactamente 50 preguntas.
 `;
  
-        const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
  
-        if (!ANTHROPIC_API_KEY) {
-            throw new Error('ANTHROPIC_API_KEY no configurada');
+        if (!OPENROUTER_API_KEY) {
+            throw new Error('OPENROUTER_API_KEY no configurada');
         }
  
-        console.log(`🤖 Llamando a Claude (Anthropic API)...`);
+        const modelos = [
+            'qwen/qwen3-235b-a22b:free',
+            'deepseek/deepseek-r1:free',
+            'mistralai/mistral-small-3.2-24b-instruct:free'
+        ];
  
-        const response = await fetch(
-            'https://api.anthropic.com/v1/messages',
-            {
-                method: 'POST',
-                headers: {
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 8000,
-                    messages: [
-                        {
-                            role: 'user',
-                            content: promptFinal
-                        }
-                    ]
-                })
+        let contenidoIA = null;
+        let ultimoError = '';
+ 
+        for (const modelo of modelos) {
+ 
+            console.log(`🤖 Probando ${modelo}`);
+ 
+            const response = await fetch(
+                'https://openrouter.ai/api/v1/chat/completions',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: modelo,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: promptFinal
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 8000
+                    })
+                }
+            );
+ 
+            if (response.ok) {
+ 
+                const data = await response.json();
+ 
+                contenidoIA =
+                    data?.choices?.[0]?.message?.content || null;
+ 
+                if (contenidoIA) {
+                    console.log(`✅ Usando ${modelo}`);
+                    break;
+                }
             }
-        );
  
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Anthropic API error ${response.status}: ${errorText}`);
+            ultimoError = await response.text();
         }
- 
-        const data = await response.json();
-        let contenidoIA = data?.content?.[0]?.text || null;
  
         if (!contenidoIA) {
-            throw new Error('Claude no devolvió contenido en la respuesta.');
+            throw new Error(
+                `Ningún modelo respondió correctamente. ${ultimoError}`
+            );
         }
- 
-        console.log(`✅ Respuesta recibida de Claude`);
  
         contenidoIA = contenidoIA
             .replace(/```json/gi, '')
