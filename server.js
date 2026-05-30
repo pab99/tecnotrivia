@@ -278,7 +278,7 @@ app.post('/admin/generar-ia', async (req, res) => {
 // ── ENDPOINT ADMIN: Cambiar tema guardando directamente en MongoDB ──────────────────────────
 app.post('/admin/cambiar-tema', async (req, res) => {
     try {
-        const { preguntas, evento_nombre, evento_subtitulo, emoji_1, emoji_2, emoji_3, url_publica } = req.body;
+        const { preguntas, evento_nombre, evento_subtitulo, emoji_1, emoji_2, emoji_3, url_publica, instagram_usuario } = req.body;
 
         if (!preguntas || !Array.isArray(preguntas) || preguntas.length < 10) {
             return res.status(400).json({ ok: false, error: 'Se necesitan al menos 10 preguntas.' });
@@ -301,6 +301,7 @@ app.post('/admin/cambiar-tema', async (req, res) => {
             if (emoji_2 !== undefined) contenido.evento.emoji_2 = emoji_2;
             if (emoji_3 !== undefined) contenido.evento.emoji_3 = emoji_3;
             contenido.evento.emojis_header = [emoji_1, emoji_2, emoji_3].filter(Boolean).join(' ') || contenido.evento.emojis_header;
+            if (instagram_usuario !== undefined) contenido.evento.instagram_usuario = instagram_usuario;
 
             await dbConfig.updateOne(
                 { tipo: "contenido_actual" },
@@ -330,7 +331,7 @@ app.post('/admin/cambiar-tema', async (req, res) => {
 // ── ENDPOINT ADMIN: Actualizar solo configuración (sin tocar preguntas) ────────
 app.post('/admin/actualizar-config', async (req, res) => {
     try {
-        const { evento_nombre, evento_subtitulo, emoji_1, emoji_2, emoji_3, url_publica } = req.body;
+        const { evento_nombre, evento_subtitulo, emoji_1, emoji_2, emoji_3, url_publica, instagram_usuario } = req.body;
 
         if (!evento_nombre || !url_publica) {
             return res.status(400).json({ ok: false, error: 'Faltan nombre del evento o URL.' });
@@ -347,6 +348,7 @@ app.post('/admin/actualizar-config', async (req, res) => {
         if (emoji_3 !== undefined) contenido.evento.emoji_3 = emoji_3;
         contenido.evento.emojis_header = [emoji_1, emoji_2, emoji_3].filter(Boolean).join(' ') || contenido.evento.emojis_header;
         if (emoji_1) contenido.evento.emoji_principal = emoji_1;
+        if (instagram_usuario !== undefined) contenido.evento.instagram_usuario = instagram_usuario;
 
         if (dbConfig) {
             await dbConfig.updateOne(
