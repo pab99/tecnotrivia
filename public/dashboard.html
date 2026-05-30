@@ -378,7 +378,7 @@
 
             <label style="font-size:0.82rem; font-weight:700; color:#555;">Tema para las preguntas</label>
             <input id="cfg-tema" class="campo-tema" placeholder="Ej: la vida de las ballenas en el océano austral">
-            <p style="font-size:0.78rem; color:#999; margin-top:2px;">Gemini generará 50 preguntas con 4 opciones cada una sobre este tema.</p>
+            <p style="font-size:0.78rem; color:#999; margin-top:2px;">La IA generará 50 preguntas con 4 opciones cada una sobre este tema.</p>
 
             <button class="btn-dash btn-ia" onclick="generarConIA()" style="margin-top: 12px;">
                 ✨ Generar 50 preguntas con IA
@@ -411,8 +411,6 @@
     </footer>
 
     <script>
-        // API KEY DE PRODUCTIVIDAD GLOBAL PARA EVITAR ERR 404
-        const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
         const USUARIO_VALIDO = "admin";
         const CLAVE_VALIDA = "tecnoincas2026";
         let socket;
@@ -435,12 +433,12 @@
             })
             .catch(() => {});
 
-        // ESCUCHA DE ENTER EN LOS CAMPOS DE LOGIN PARA FACILITAR EL ACCESO
+        // ESCUCHA DE ENTER EN LOS CAMPOS DE LOGIN
         document.getElementById('input-clave').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') autenticar();
         });
 
-        // AUTENTICACIÓN CORREGIDA CON ENMASCARAMIENTO DE INTERFAZ
+        // AUTENTICACIÓN
         function autenticar() {
             const usr = document.getElementById('input-usuario').value.trim();
             const pass = document.getElementById('input-clave').value.trim();
@@ -449,7 +447,6 @@
                 document.getElementById('seccion-login').style.display = 'none';
                 document.getElementById('seccion-dashboard').style.display = 'block';
                 
-                // Inicializaciones obligatorias de datos persistentes
                 inicializarConexionReal();
                 cargarConfigActual();
             } else {
@@ -471,9 +468,8 @@
         }
 
         function inicializarConexionReal() {
-            // Verificación preventiva por si el script io no cargó en el host
             if (typeof io === 'undefined') {
-                console.error("Socket.io no está disponible en este entorno de red.");
+                console.error("Socket.io no está disponible.");
                 return;
             }
 
@@ -600,7 +596,7 @@
             }
         }
 
-        // ── CONFIGURACIÓN DEL EVENTO VIA GEMINI IA HTTP DIRECTO ──
+        // ── CONFIGURACIÓN DEL EVENTO VIA ENDPOINT PUENTE (SIN ERRORES 404) ──
         let _preguntasGeneradas = null;
 
         function cargarConfigActual() {
@@ -619,6 +615,7 @@
             document.getElementById('url-actual-display').textContent = 'Nueva URL: ' + (this.value || '—');
         });
 
+        // LLAMADA RECONFIGURADA HACIA TU PROPIO BACKEND
         async function generarConIA() {
             const tema    = document.getElementById('cfg-tema').value.trim();
             const nombre  = document.getElementById('cfg-nombre').value.trim();
@@ -626,58 +623,32 @@
             if (!tema) { mostrarEstado('Ingresá un tema para generar las preguntas.', 'error'); return; }
             if (!nombre) { mostrarEstado('Ingresá el nombre del evento primero.', 'error'); return; }
 
-            mostrarEstado('⏳ Generando 50 preguntas sobre "' + tema + '" por HTTP directo con Gemini... esto puede tardar unos segundos.', 'generando');
+            mostrarEstado('⏳ Solicitando al servidor backend que procese el tema con la IA... Aguardá unos segundos.', 'generando');
             document.getElementById('preview-preguntas').style.display = 'none';
             document.getElementById('btn-aplicar-tema').disabled = true;
             _preguntasGeneradas = null;
 
-            const promptFinal = `Generá exactamente 50 preguntas de trivia en español sobre el tema: "${tema}".
-Cada pregunta debe tener 1 respuesta correcta y 3 incorrectas.
-Respondé ÚNICAMENTE con un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones.
-El formato de cada elemento debe ser exactamente:
-{"id": N, "pregunta": "...", "correcta": "...", "incorrectas": ["...", "...", "..."]}
-Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las preguntas deben ser variadas y de dificultad progresiva.`;
-
             try {
-                const urlApi = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-                
-                const response = await fetch(urlApi, {
+                // Ahora le pega directamente al backend de tu propia app
+                const response = await fetch('/admin/generar-ia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptFinal }] }]
-                    })
+                    body: JSON.stringify({ tema: tema })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Error de comunicación con Google Gemini (Status: ${response.status})`);
+                const data = await response.json();
+
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || `Status del servidor: ${response.status}`);
                 }
 
-                const dataJson = await response.json();
-                
-                if (!dataJson.candidates || !dataJson.candidates[0] || !dataJson.candidates[0].content) {
-                    throw new Error("El modelo no devolvió resultados válidos.");
-                }
-
-                let responseText = dataJson.candidates[0].content.parts[0].text.trim();
-
-                if (responseText.startsWith("```")) {
-                    responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-                }
-
-                const preguntas = JSON.parse(responseText);
-
-                if (!Array.isArray(preguntas) || preguntas.length === 0) {
-                    throw new Error("La estructura devuelta no es una matriz limpia.");
-                }
-
-                _preguntasGeneradas = preguntas;
-                mostrarEstado('✅ ' + preguntas.length + ' preguntas generadas correctamente con Gemini.', 'ok');
-                mostrarPreview(preguntas);
+                _preguntasGeneradas = data.preguntas;
+                mostrarEstado('✅ ' + data.preguntas.length + ' preguntas generadas correctamente mediante el servidor.', 'ok');
+                mostrarPreview(data.preguntas);
 
             } catch (err) {
                 console.error(err);
-                mostrarEstado('❌ Error al conectar con la IA: ' + err.message, 'error');
+                mostrarEstado('❌ Error de comunicación: ' + err.message + '. Asegurate de haber creado la ruta "/admin/generar-ia" en tu archivo del servidor.', 'error');
             }
         }
 
