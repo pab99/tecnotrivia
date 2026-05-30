@@ -143,7 +143,7 @@ app.get('/ranking_persistente.json', (req, res) => {
 // ── CONFIGURACIÓN DE PARSERS Y MIDDLEWARES DE ADMIN ─────────────────────────
 app.use(express.json({ limit: '500kb' }));
 
-// ── NUEVO ENDPOINT PUENTE: Generar preguntas usando Gemini de manera segura ──
+// ── ENDPOINT PUENTE SEGURO: Evita el error 404 procesando el Token en las Cabeceras ──
 app.post('/admin/generar-ia', async (req, res) => {
     try {
         const { tema } = req.body;
@@ -158,22 +158,26 @@ El formato de cada elemento debe ser exactamente:
 {"id": N, "pregunta": "...", "correcta": "...", "incorrectas": ["...", "...", "..."]}
 Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las preguntas deben ser variadas y de dificultad progresiva.`;
 
-        // Clave del entorno global provista por el cliente
-        const API_KEY_REAL = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A"; 
+        // Tu token real de Google Cloud
+        const GOOGLE_CLOUD_TOKEN = "AQ.Ab8RN6IgEmkCWCBiuEaonDHczZw0a5MJGQ65J0dsyOXXxC6-Yw"; 
         
-        // Endpoint corregido de v1 a v1beta (Resuelve el error 404 de raíz)
-        const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY_REAL}`;
+        // URL limpia sin "?key=" (El endpoint requiere autenticación Bearer)
+        const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
         const response = await fetch(urlApi, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GOOGLE_CLOUD_TOKEN}`
+            },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: promptFinal }] }]
             })
         });
 
         if (!response.ok) {
-            throw new Error(`Google Gemini API respondió con código de estado HTTP: ${response.status}`);
+            const errorBody = await response.text();
+            throw new Error(`Google API respondió con código status ${response.status}. Detalles: ${errorBody}`);
         }
 
         const dataJson = await response.json();
@@ -184,13 +188,12 @@ Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las
 
         let responseText = dataJson.candidates[0].content.parts[0].text.trim();
 
-        // Eliminar forzados de código markdown si los añade el modelo
+        // Limpieza quirúrgica de bloques de código markdown añadidos por inercia por el modelo
         if (responseText.startsWith("```")) {
             responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
         }
 
         const preguntasValidadas = JSON.parse(responseText);
-        
         return res.json({ ok: true, preguntas: preguntasValidadas });
 
     } catch (err) {
@@ -211,214 +214,5 @@ app.post('/admin/cambiar-tema', async (req, res) => {
             return res.status(400).json({ ok: false, error: 'Faltan nombre del evento o URL.' });
         }
 
-        // Si la base de datos está disponible, persistimos en la nube
         if (dbPreguntas && dbConfig) {
-            // 1. Limpiar preguntas anteriores e insertar las nuevas en MongoDB
-            await dbPreguntas.deleteMany({});
-            await dbPreguntas.insertMany(preguntas);
-
-            // 2. Estructurar el nuevo contenido de textos del evento
-            contenido.config.url_publica           = url_publica;
-            contenido.evento.nombre                = evento_nombre;
-            contenido.evento.subtitulo             = evento_subtitulo || evento_nombre;
-            contenido.login.titulo                 = '¡' + evento_nombre + '!';
-            contenido.leaderboard.titulo_principal = evento_nombre;
-            contenido.resultados.url_reinicio       = url_publica;
-
-            // 3. Guardar configuración estructurada en MongoDB
-            await dbConfig.updateOne(
-                { tipo: "contenido_actual" },
-                { $set: { tipo: "contenido_actual", datos: contenido } },
-                { upsert: true }
-            );
-
-            // 4. Actualizar las variables en tiempo real en la memoria del proceso
-            preguntasTodo = preguntas;
-
-            console.log(`🔄 TEMA ACTUALIZADO EN MONGO ATLAS: "${evento_nombre}" | ${preguntas.length} preguntas.`);
-            
-            res.json({
-                ok: true,
-                mensaje: `Tema "${evento_nombre}" aplicado y guardado en la nube con éxito.`,
-                preguntas_total: preguntas.length
-            });
-        } else {
-            res.status(500).json({ ok: false, error: "La base de datos de MongoDB no está inicializada." });
-        }
-
-    } catch (err) {
-        console.error('❌ Error al cambiar tema en la nube:', err.message);
-        res.status(500).json({ ok: false, error: err.message });
-    }
-});
-
-// LOGICA CENTRAL DE COMUNICACIÓN EN VIVO (WebSockets)
-io.on('connection', (socket) => {
-    console.log('🔌 Nuevo cliente conectado:', socket.id);
-
-    let listaAlConectar = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
-    socket.emit('update_ranking', listaAlConectar);
-
-    socket.on('pedir_ranking_dashboard', () => {
-        let listaCompleta = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
-        socket.emit('data_ranking_dashboard', listaCompleta);
-    });
-
-    socket.on('join_game', (username) => {
-        const cleanUsername = username.toLowerCase().replace('@', '').trim();
-        
-        if (jugadores[cleanUsername]) {
-            jugadores[cleanUsername].vidas = 3;
-            jugadores[cleanUsername].respondidas = [];
-            jugadores[cleanUsername].combo = 0;
-            jugadores[cleanUsername].puntosRondaActual = 0; 
-            jugadores[cleanUsername].socketId = socket.id;
-        } else {
-            jugadores[cleanUsername] = {
-                username: cleanUsername,
-                puntos: 0, 
-                puntosRondaActual: 0, 
-                vidas: 3,
-                respondidas: [],
-                combo: 0,
-                socketId: socket.id
-            };
-        }
-        
-        socket.usernameClean = cleanUsername;
-        guardarRankingEnNube(cleanUsername); 
-        enviarRankingAClientes();
-    });
-
-    socket.on('get_pregunta', () => {
-        const cleanUsername = socket.usernameClean;
-        const jugador = jugadores[cleanUsername];
-        if (!jugador) return;
-
-        if (jugador.vidas <= 0 || jugador.respondidas.length >= 10) {
-            const puesto = obtenerPuesto(cleanUsername);
-            socket.emit(jugador.vidas <= 0 ? 'game_over' : 'game_completed', { puntos: jugador.puntosRondaActual, puesto: puesto });
-            return;
-        }
-
-        const disponibles = preguntasTodo.filter(p => !jugador.respondidas.includes(p.id));
-        if (disponibles.length === 0) {
-            const puesto = obtenerPuesto(cleanUsername);
-            socket.emit('game_completed', { puntos: jugador.puntosRondaActual, puesto: puesto });
-            return;
-        }
-
-        const pregunta = disponibles[Math.floor(Math.random() * disponibles.length)];
-        const opciones = [pregunta.correcta, ...pregunta.incorrectas].sort(() => Math.random() - 0.5);
-
-        socket.emit('pregunta_data', {
-            id: pregunta.id,
-            pregunta: pregunta.pregunta,
-            opciones: opciones,
-            numeroPregunta: jugador.respondidas.length + 1
-        });
-    });
-
-    socket.on('enviar_respuesta', ({ preguntaId, respuesta, intento, tiempoEmpleado }) => {
-        const cleanUsername = socket.usernameClean;
-        const jugador = jugadores[cleanUsername];
-        if (!jugador) return;
-
-        if (respuesta === "__TIEMPO_AGOTADO__") {
-            jugador.respondidas.push(preguntaId);
-            jugador.vidas -= 1;
-            jugador.combo = 0; 
-            
-            socket.emit('resultado_respuesta', { correcta: false, tiempoAgotado: true, intento: 2, vidas: jugador.vidas });
-            guardarRankingEnNube(cleanUsername);
-            enviarRankingAClientes();
-            return;
-        }
-
-        const pregunta = preguntasTodo.find(p => p.id === preguntaId);
-        if (!pregunta) return;
-        
-        const esCorrecta = pregunta.correcta === respuesta;
-
-        if (esCorrecta) {
-            jugador.respondidas.push(preguntaId);
-            jugador.combo += 1;
-
-            let puntosBase = intento === 1 ? 10 : 5;
-            let bonusTiempo = Math.max(0, Math.round(15 * Math.log(20 / (tiempoEmpleado + 1))));
-            let puntosPregunta = puntosBase + bonusTiempo;
-
-            let multiplicador = 1;
-            if (jugador.combo === 3) multiplicador = 2;
-            if (jugador.combo === 6) multiplicador = 4;
-            if (jugador.combo === 9) multiplicador = 6;
-
-            jugador.puntosRondaActual += puntosPregunta * multiplicador;
-
-            if (jugador.puntosRondaActual > jugador.puntos) {
-                jugador.puntos = jugador.puntosRondaActual;
-            }
-
-            socket.emit('resultado_respuesta', { correcta: true, puntos: jugador.puntosRondaActual, combo: jugador.combo });
-        } else {
-            if (intento === 1) {
-                socket.emit('resultado_respuesta', { correcta: false, intento: 1 });
-            } else {
-                jugador.respondidas.push(preguntaId);
-                jugador.vidas -= 1;
-                jugador.combo = 0;
-                socket.emit('resultado_respuesta', { correcta: false, intento: 2, vidas: jugador.vidas });
-            }
-        }
-        
-        guardarRankingEnNube(cleanUsername); 
-        enviarRankingAClientes();
-    });
-
-    socket.on('reset_game', () => {
-        const cleanUsername = socket.usernameClean;
-        if (cleanUsername && jugadores[cleanUsername]) {
-            jugadores[cleanUsername].vidas = 3;
-            jugadores[cleanUsername].respondidas = [];
-            jugadores[cleanUsername].combo = 0;
-            jugadores[cleanUsername].puntosRondaActual = 0;
-            
-            guardarRankingEnNube(cleanUsername);
-            enviarRankingAClientes();
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('🔌 Usuario desconectado:', socket.id);
-    });
-});
-
-function obtenerPuesto(username) {
-    let listaOrdenada = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
-    let index = listaOrdenada.findIndex(j => j.username === username);
-    return index !== -1 ? index + 1 : listaOrdenada.length;
-}
-
-function enviarRankingAClientes() {
-    let lista = Object.values(jugadores).sort((a, b) => b.puntos - a.puntos);
-    io.emit('update_ranking', lista);
-    io.emit('data_ranking_dashboard', lista); 
-}
-
-// Función Keep-Alive usando la URL real del evento configurada
-function activarKeepAlive() {
-    if (contenido && contenido.config && contenido.config.url_publica) {
-        const urlPeticion = contenido.config.url_publica;
-        setInterval(() => {
-            http.get(urlPeticion, (res) => {}).on('error', (err) => {
-                console.log("Ping Keep-Alive fallido silenciosamente.");
-            });
-        }, 300000); // Cada 5 minutos
-    }
-}
-
-// INICIO DEL SERVIDOR
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🚀 Servidor central corriendo en el puerto ${PORT}`);
-});
+            // 1. Limpiar preguntas anteriores e insertar las nuevas en
