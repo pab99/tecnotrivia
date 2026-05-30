@@ -198,6 +198,33 @@ header {
             letter-spacing: 1px;
         }
 
+
+        /* ─── SELECTOR DE IDIOMAS ─── */
+        .lang-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .lang-btn {
+            font-size: 1.6rem;
+            background: none;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 4px 6px;
+            line-height: 1;
+            transition: all 0.15s;
+            opacity: 0.5;
+        }
+        .lang-btn.activo {
+            border-color: var(--amarillo);
+            opacity: 1;
+            background: rgba(253,216,53,0.15);
+            transform: scale(1.15);
+        }
+        .lang-btn:hover { opacity: 1; }
+
         /* ─── INSTRUCCIONES ─── */
         .instrucciones {
             background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
@@ -493,6 +520,16 @@ header {
             <div class="subtitulo" id="hdr-subtitulo">¡Participá y probá tu sabiduría!</div>
         </div>
 
+
+        <!-- SELECTOR DE IDIOMAS -->
+        <div class="lang-selector" id="lang-selector">
+            <button class="lang-btn activo" data-lang="es" onclick="cambiarIdioma('es')" title="Español">🇪🇸</button>
+            <button class="lang-btn" data-lang="en" onclick="cambiarIdioma('en')" title="English">🇬🇧</button>
+            <button class="lang-btn" data-lang="fr" onclick="cambiarIdioma('fr')" title="Français">🇫🇷</button>
+            <button class="lang-btn" data-lang="pt" onclick="cambiarIdioma('pt')" title="Português">🇧🇷</button>
+            <button class="lang-btn" data-lang="de" onclick="cambiarIdioma('de')" title="Deutsch">🇩🇪</button>
+        </div>
+
         <!-- ── PANTALLA LOGIN ── -->
         <div id="pantalla-login" class="pantalla activa tarjeta">
             <div class="login-emojis" id="login-emojis">🎯 ⭐ 🎯</div>
@@ -610,6 +647,113 @@ header {
             .catch(() => { window._contenido = null; });
 
         // ── MECÁNICA DEL JUEGO (sin cambios) ──
+
+        // ── MULTILENGUAJE ──
+        const _textos = {
+            es: {
+                placeholder: '@tu_usuario',
+                instrucciones_titulo: '¿Cómo jugar?',
+                instrucciones_texto: ' Respondé 10 preguntas lo más rápido posible. Si te equivocás, tenés una segunda chance. El tiempo también suma puntos... ¡Al final ves tu posición en el ranking del evento!',
+                btn_ingresar: 'INGRESAR',
+                pregunta_label: 'PREGUNTA',
+                tiempo_agotado: '⏱️ ¡Tiempo agotado!',
+                victoria_titulo: '¡Sos un gran ganador! 🏆',
+                victoria_mensaje: '¡Felicitaciones! Completaste la ronda.',
+                derrota_titulo: '¡Uh, casi! 💪',
+                derrota_mensaje: 'No pudiste completar el juego. ¡Volvé por una revancha!',
+                btn_reiniciar: '🔄 Volver a Jugar',
+                lbl_puntaje: 'Puntaje',
+                lbl_puesto: 'Puesto',
+                alerta_usuario: 'Ingresá tu usuario de Instagram.'
+            },
+            en: {
+                placeholder: '@your_username',
+                instrucciones_titulo: 'How to play?',
+                instrucciones_texto: ' Answer 10 questions as fast as you can. If you make a mistake, you get a second chance. Time also counts for points... At the end you see your ranking position!',
+                btn_ingresar: 'ENTER',
+                pregunta_label: 'QUESTION',
+                tiempo_agotado: '⏱️ Time is up!',
+                victoria_titulo: 'You are a winner! 🏆',
+                victoria_mensaje: 'Congratulations! You completed the round.',
+                derrota_titulo: 'So close! 💪',
+                derrota_mensaje: "Couldn't finish this time. Come back for a rematch!",
+                btn_reiniciar: '🔄 Play Again',
+                lbl_puntaje: 'Score',
+                lbl_puesto: 'Rank',
+                alerta_usuario: 'Enter your Instagram username.'
+            },
+            fr: {
+                placeholder: '@ton_utilisateur',
+                instrucciones_titulo: 'Comment jouer?',
+                instrucciones_texto: ' Réponds à 10 questions le plus vite possible. Si tu te trompes, tu as une deuxième chance. Le temps compte aussi... À la fin tu vois ton classement!',
+                btn_ingresar: 'ENTRER',
+                pregunta_label: 'QUESTION',
+                tiempo_agotado: '⏱️ Temps écoulé!',
+                victoria_titulo: 'Tu es un grand gagnant! 🏆',
+                victoria_mensaje: 'Félicitations! Tu as complété la partie.',
+                derrota_titulo: 'Presque! 💪',
+                derrota_mensaje: 'Pas cette fois. Reviens pour une revanche!',
+                btn_reiniciar: '🔄 Rejouer',
+                lbl_puntaje: 'Score',
+                lbl_puesto: 'Rang',
+                alerta_usuario: 'Entre ton nom d'utilisateur Instagram.'
+            },
+            pt: {
+                placeholder: '@seu_usuario',
+                instrucciones_titulo: 'Como jogar?',
+                instrucciones_texto: ' Responda 10 perguntas o mais rápido possível. Se errar, tem uma segunda chance. O tempo também conta pontos... No final você vê sua posição no ranking!',
+                btn_ingresar: 'ENTRAR',
+                pregunta_label: 'PERGUNTA',
+                tiempo_agotado: '⏱️ Tempo esgotado!',
+                victoria_titulo: 'Você é um grande vencedor! 🏆',
+                victoria_mensaje: 'Parabéns! Você completou a rodada.',
+                derrota_titulo: 'Quase! 💪',
+                derrota_mensaje: 'Não conseguiu dessa vez. Volte para uma revanche!',
+                btn_reiniciar: '🔄 Jogar Novamente',
+                lbl_puntaje: 'Pontos',
+                lbl_puesto: 'Posição',
+                alerta_usuario: 'Digite seu usuário do Instagram.'
+            },
+            de: {
+                placeholder: '@dein_benutzername',
+                instrucciones_titulo: 'Wie spielt man?',
+                instrucciones_texto: ' Beantworte 10 Fragen so schnell wie möglich. Bei einem Fehler gibt es eine zweite Chance. Zeit zählt auch Punkte... Am Ende siehst du dein Ranking!',
+                btn_ingresar: 'EINTRETEN',
+                pregunta_label: 'FRAGE',
+                tiempo_agotado: '⏱️ Zeit abgelaufen!',
+                victoria_titulo: 'Du bist ein Gewinner! 🏆',
+                victoria_mensaje: 'Glückwunsch! Du hast die Runde abgeschlossen.',
+                derrota_titulo: 'Fast geschafft! 💪',
+                derrota_mensaje: 'Diesmal nicht. Komm für einen Rückkampf zurück!',
+                btn_reiniciar: '🔄 Nochmal spielen',
+                lbl_puntaje: 'Punkte',
+                lbl_puesto: 'Rang',
+                alerta_usuario: 'Gib deinen Instagram-Benutzernamen ein.'
+            }
+        };
+
+        let _idiomaActual = 'es';
+
+        function cambiarIdioma(lang) {
+            _idiomaActual = lang;
+            // Actualizar botones
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('activo', b.dataset.lang === lang);
+            });
+            // Aplicar textos
+            const t = _textos[lang] || _textos.es;
+            const c = window._contenido;
+            document.getElementById('username-display').placeholder = t.placeholder;
+            document.getElementById('inst-titulo').textContent = t.instrucciones_titulo;
+            document.getElementById('inst-texto').textContent = t.instrucciones_texto;
+            if (btnJugarRef) btnJugarRef.innerText = t.btn_ingresar;
+            document.getElementById('lbl-puntaje').textContent = t.lbl_puntaje;
+            document.getElementById('lbl-puesto').textContent = t.lbl_puesto;
+            document.getElementById('btn-reiniciar').textContent = (c && c.resultados.btn_reiniciar) ? t.btn_reiniciar : t.btn_reiniciar;
+            // Guardar preferencia en sesión
+            sessionStorage.setItem('lang', lang);
+        }
+
         const socket = io();
         let username = "";
         let preguntaActual = null;
@@ -671,6 +815,10 @@ header {
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            // Restaurar idioma de sesión anterior
+            const langGuardado = sessionStorage.getItem('lang');
+            if (langGuardado && langGuardado !== 'es') setTimeout(() => cambiarIdioma(langGuardado), 200);
+
             const keys = [
                 '1','2','3','4','5','6','7','8','9','0',
                 'q','w','e','r','t','y','u','i','o','p',
@@ -715,11 +863,12 @@ header {
                         playSound('success');
                         document.getElementById('txt-usuario').innerText = "@" + username.replace('@','');
                         activarMantenerPantallaEncendida();
-                        socket.emit('join_game', username);
+                        socket.emit('join_game', { username: username, idioma: _idiomaActual });
                         cambiarPantalla('pantalla-juego');
                         socket.emit('get_pregunta');
                     } else {
-                        alert('Ingresá tu usuario de Instagram.');
+                        const t = _textos[_idiomaActual] || _textos.es;
+                        alert(t.alerta_usuario);
                     }
                 };
                 teclado.appendChild(btnJugar);
@@ -768,7 +917,8 @@ header {
             intentoActual = 1;
             tiempoInicio = Date.now();
 
-            document.getElementById('txt-pregunta-num').innerText = `PREGUNTA ${data.numeroPregunta}/10`;
+            const tPQ = _textos[_idiomaActual] || _textos.es;
+            document.getElementById('txt-pregunta-num').innerText = `${tPQ.pregunta_label} ${data.numeroPregunta}/10`;
             document.getElementById('pregunta-titulo').innerText = data.pregunta;
 
             const contenedor = document.getElementById('contenedor-opciones');
@@ -836,7 +986,8 @@ header {
 
                 if (res.tiempoAgotado) {
                     actualizarVidas(res.vidas);
-                    document.getElementById('txt-combo').innerText = "⏱️ ¡Tiempo agotado!";
+                    const tTA = _textos[_idiomaActual] || _textos.es;
+                    document.getElementById('txt-combo').innerText = tTA.tiempo_agotado;
                     setTimeout(() => { socket.emit('get_pregunta'); }, 1000);
                     return;
                 }
@@ -881,9 +1032,10 @@ header {
             clearInterval(timerInterval);
             cambiarPantalla('pantalla-fin');
             const c = window._contenido;
-            document.getElementById('fin-icono').textContent   = '🥇';
-            document.getElementById('fin-titulo').textContent  = (c && c.resultados.victoria_titulo)  || '¡Completaste la ronda!';
-            document.getElementById('fin-mensaje').textContent = (c && c.resultados.victoria_mensaje) || 'Gracias por jugar.';
+            const t = _textos[_idiomaActual] || _textos.es;
+            document.getElementById('fin-icono').textContent   = (c && c.resultados.emoji_victoria) || '🥇';
+            document.getElementById('fin-titulo').textContent  = t.victoria_titulo;
+            document.getElementById('fin-mensaje').textContent = t.victoria_mensaje;
             document.getElementById('fin-puesto').textContent  = `#${res.puesto}`;
             document.getElementById('fin-puntos').textContent  = puntosLocales;
         });

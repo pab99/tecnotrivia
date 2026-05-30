@@ -383,9 +383,15 @@
             </div>
             <input type="file" id="input-json" accept=".json" style="display:none" onchange="cargarJsonLocal(event)">
 
-            <button class="btn-dash btn-upload" id="btn-subir-json" onclick="subirJsonAMongo()" disabled style="margin-top: 12px;">
-                ☁️ Subir JSON a MongoDB y Aplicar
-            </button>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button class="btn-dash btn-upload" id="btn-subir-json" onclick="subirJsonAMongo()" disabled style="flex:1;">
+                    ☁️ Subir JSON a MongoDB y Aplicar
+                </button>
+                <button class="btn-dash" id="btn-traducir-json" onclick="traducirYSubirJson()" disabled style="flex:1; background: linear-gradient(135deg, #1565c0, #42a5f5);">
+                    🌐 Traducir a 5 idiomas y Subir
+                </button>
+            </div>
+            <div id="estado-traduccion" style="font-size:0.82rem; color:#666; margin-top:6px; display:none;"></div>
 
             <hr class="separador-tema">
 
@@ -393,7 +399,7 @@
             <input id="cfg-tema" class="campo-tema" placeholder="Ej: Historia de la robótica industrial">
             
             <button class="btn-dash btn-ia" onclick="generarConIA()" style="margin-top: 12px;">
-                ✨ Generar 50 preguntas con IA
+                ✨ Generar preguntas con IA (20 preguntas × 5 idiomas)
             </button>
 
             <div class="estado-ia" id="estado-ia"></div>
@@ -660,6 +666,7 @@
                     document.getElementById('upload-info').textContent = `✅ ${data.length} preguntas cargadas desde "${file.name}"`;
                     document.getElementById('upload-zona').style.borderColor = '#1e8449';
                     document.getElementById('btn-subir-json').disabled = false;
+                    document.getElementById('btn-traducir-json').disabled = false;
                     mostrarEstado(`📂 Archivo listo: ${data.length} preguntas. Completá el nombre del evento y hacé clic en "Subir JSON a MongoDB".`, 'ok');
                 } catch (err) {
                     mostrarEstado('❌ Error en el archivo: ' + err.message, 'error');
@@ -710,6 +717,38 @@
             }
         }
 
+
+        async function traducirYSubirJson() {
+            if (!_preguntasDesdeArchivo) return;
+            const nombre = document.getElementById('cfg-nombre').value.trim();
+            const url = document.getElementById('cfg-url').value.trim();
+            if (!nombre || !url) { mostrarEstado('❌ Completá nombre y URL antes de traducir.', 'error'); return; }
+
+            const estadoTrad = document.getElementById('estado-traduccion');
+            estadoTrad.style.display = 'block';
+            estadoTrad.textContent = '🌐 Enviando a traducir en 5 idiomas vía IA... esto puede tardar 1-2 minutos.';
+            document.getElementById('btn-traducir-json').disabled = true;
+            document.getElementById('btn-subir-json').disabled = true;
+
+            try {
+                const resp = await fetch('/admin/traducir-preguntas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ preguntas: _preguntasDesdeArchivo })
+                });
+                const r = await resp.json();
+                if (!r.ok) throw new Error(r.error);
+
+                estadoTrad.textContent = `✅ Traducción completada. Subiendo ${r.preguntas.length} preguntas multilenguaje...`;
+                _preguntasGeneradas = r.preguntas;
+                _preguntasDesdeArchivo = null;
+                await aplicarTema();
+                estadoTrad.textContent = '🎉 ¡Preguntas traducidas y aplicadas en la nube!';
+            } catch (err) {
+                estadoTrad.textContent = '❌ Error en traducción: ' + err.message;
+                document.getElementById('btn-traducir-json').disabled = false;
+            }
+        }
         function mostrarEstado(msg, tipo) {
             const el = document.getElementById('estado-ia');
             el.textContent = msg;
