@@ -477,15 +477,15 @@
 
         <!-- HEADER -->
         <div class="app-header">
-            <span class="sol" id="hdr-sol">☀️</span>
-            <h1 id="hdr-titulo">Gran Trivia de Mayo</h1>
-            <div class="subtitulo" id="hdr-subtitulo">Revolución de Mayo</div>
+            <span class="sol" id="hdr-sol">🎯</span>
+            <h1 id="hdr-titulo">Gran Trivia</h1>
+            <div class="subtitulo" id="hdr-subtitulo">¡Participá y probá tu sabiduría!</div>
         </div>
 
         <!-- ── PANTALLA LOGIN ── -->
         <div id="pantalla-login" class="pantalla activa tarjeta">
-            <div class="login-emojis" id="login-emojis">🇦🇷 🏛️ ☀️ 🇦🇷</div>
-            <h2 class="login-titulo" id="login-titulo">¡Gran Trivia de Mayo!</h2>
+            <div class="login-emojis" id="login-emojis">🎯 ⭐ 🎯</div>
+            <h2 class="login-titulo" id="login-titulo">¡Gran Trivia!</h2>
             <p class="login-subtitulo" id="login-subtitulo">Ingresá tu usuario de Instagram para aparecer en la pantalla gigante</p>
 
             <input type="text" id="username-display" class="input-ig" placeholder="@tu_usuario" readonly>
@@ -557,7 +557,7 @@
             .then(r => r.json())
             .then(c => {
                 // Header
-                document.getElementById('hdr-sol').textContent       = c.evento.emoji_principal;
+                document.getElementById('hdr-sol').textContent       = c.evento.emoji_1 || c.evento.emoji_principal || '⭐';
                 document.getElementById('hdr-titulo').textContent    = c.evento.nombre;
                 document.getElementById('hdr-subtitulo').textContent = c.evento.subtitulo;
                 document.title = c.evento.nombre + ' 🇦🇷';

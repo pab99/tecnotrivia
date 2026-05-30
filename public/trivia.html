@@ -271,8 +271,8 @@
 <body>
 
     <header>
-        <div class="sol-patrio">☀️</div>
-        <h1 id="titulo-principal">Gran Trivia de Mayo</h1>
+        <div class="sol-patrio" id="trivia-sol">🎯</div>
+        <h1 id="titulo-principal">Gran Trivia</h1>
     </header>
 
     <div class="pantalla-layout">
@@ -304,6 +304,8 @@
                 window._contenido = c;
                 const ldb = c.leaderboard;
                 document.getElementById('titulo-principal').textContent  = ldb.titulo_principal;
+                const solEl = document.getElementById('trivia-sol');
+                if (solEl) solEl.textContent = (c.evento.emoji_1 || c.evento.emoji_principal || '⭐');
                 document.getElementById('ldb-btn-sumate').textContent    = ldb.btn_sumate;
                 document.getElementById('ldb-instruccion-qr').innerHTML  = ldb.instruccion_qr.replace(',', ',<br>');
                 document.title = c.evento.nombre + ' — Leaderboard';
