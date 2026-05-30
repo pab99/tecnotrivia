@@ -400,7 +400,7 @@
                 </p>
             </div>
 
-            <button class="btn-dash btn-aplicar" id="btn-aplicar-tema" onclick="aplicarTema()" disabled style="margin-top: 12px;">
+            <button class="btn-dash btn-aplicar" id="btn-aplicar-tema" onclick="aplicarTema()" style="margin-top: 12px;">
                 ✅ Confirmar y Aplicar al Evento
             </button>
         </div>
@@ -516,7 +516,7 @@
 
             mostrarEstado('⏳ Procesando tema en el backend seguro... Aguardá unos segundos.', 'generando');
             document.getElementById('preview-preguntas').style.display = 'none';
-            document.getElementById('btn-aplicar-tema').disabled = true;
+            // btn-aplicar-tema siempre activo
 
             try {
                 const response = await fetch('/admin/generar-ia', {
@@ -541,7 +541,7 @@
                 });
                 document.getElementById('total-generadas').textContent = data.preguntas.length;
                 document.getElementById('preview-preguntas').style.display = 'block';
-                document.getElementById('btn-aplicar-tema').disabled = false;
+                // btn-aplicar-tema siempre habilitado
 
             } catch (err) {
                 mostrarEstado('❌ Error: ' + err.message, 'error');
@@ -549,33 +549,67 @@
         }
 
         async function aplicarTema() {
-            if (!_preguntasGeneradas) return;
-            mostrarEstado('⏳ Guardando nueva configuración en MongoDB Atlas...', 'generando');
+            const nombre   = document.getElementById('cfg-nombre').value.trim();
+            const subtitulo= document.getElementById('cfg-subtitulo').value.trim();
+            const emoji1   = document.getElementById('cfg-emoji1').value.trim();
+            const emoji2   = document.getElementById('cfg-emoji2').value.trim();
+            const emoji3   = document.getElementById('cfg-emoji3').value.trim();
+            const url      = document.getElementById('cfg-url').value.trim();
 
-            try {
-                const resp = await fetch('/admin/cambiar-tema', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        preguntas: _preguntasGeneradas,
-                        evento_nombre: document.getElementById('cfg-nombre').value.trim(),
-                        evento_subtitulo: document.getElementById('cfg-subtitulo').value.trim(),
-                        emoji_1: document.getElementById('cfg-emoji1').value.trim(),
-                        emoji_2: document.getElementById('cfg-emoji2').value.trim(),
-                        emoji_3: document.getElementById('cfg-emoji3').value.trim(),
-                        url_publica: document.getElementById('cfg-url').value.trim()
-                    })
-                });
-                const r = await resp.json();
-                if (r.ok) {
-                    mostrarEstado('🎉 ¡Tema y preguntas sincronizadas en la Nube!', 'ok');
-                    _preguntasGeneradas = null;
-                    document.getElementById('preview-preguntas').style.display = 'none';
-                } else {
-                    throw new Error(r.error);
+            if (!nombre || !url) {
+                mostrarEstado('❌ Completá el nombre del evento y la URL antes de aplicar.', 'error');
+                return;
+            }
+
+            // Si hay preguntas nuevas generadas por IA → usar cambiar-tema (actualiza preguntas + config)
+            if (_preguntasGeneradas) {
+                mostrarEstado('⏳ Guardando preguntas y configuración en MongoDB Atlas...', 'generando');
+                try {
+                    const resp = await fetch('/admin/cambiar-tema', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            preguntas: _preguntasGeneradas,
+                            evento_nombre: nombre,
+                            evento_subtitulo: subtitulo,
+                            emoji_1: emoji1,
+                            emoji_2: emoji2,
+                            emoji_3: emoji3,
+                            url_publica: url
+                        })
+                    });
+                    const r = await resp.json();
+                    if (r.ok) {
+                        mostrarEstado('🎉 ¡Preguntas y configuración sincronizadas en la Nube!', 'ok');
+                        _preguntasGeneradas = null;
+                        document.getElementById('preview-preguntas').style.display = 'none';
+                    } else { throw new Error(r.error); }
+                } catch (err) {
+                    mostrarEstado('❌ Error al aplicar: ' + err.message, 'error');
                 }
-            } catch (err) {
-                mostrarEstado('❌ Error al aplicar: ' + err.message, 'error');
+            } else {
+                // Solo actualizar configuración (título, emojis, etc.) sin tocar preguntas
+                mostrarEstado('⏳ Actualizando configuración en MongoDB Atlas...', 'generando');
+                try {
+                    const resp = await fetch('/admin/actualizar-config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            evento_nombre: nombre,
+                            evento_subtitulo: subtitulo,
+                            emoji_1: emoji1,
+                            emoji_2: emoji2,
+                            emoji_3: emoji3,
+                            url_publica: url
+                        })
+                    });
+                    const r = await resp.json();
+                    if (r.ok) {
+                        mostrarEstado('✅ ' + r.mensaje, 'ok');
+                    } else { throw new Error(r.error); }
+                } catch (err) {
+                    mostrarEstado('❌ Error al actualizar: ' + err.message, 'error');
+                }
             }
         }
 
