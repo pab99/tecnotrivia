@@ -346,6 +346,20 @@
                     <input id="cfg-subtitulo" class="campo-tema" placeholder="Ej: Ballenas y Océanos">
                 </div>
             </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 8px;">
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 1</label>
+                    <input id="cfg-emoji1" class="campo-tema" placeholder="🇦🇷" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 2</label>
+                    <input id="cfg-emoji2" class="campo-tema" placeholder="🏛️" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 3</label>
+                    <input id="cfg-emoji3" class="campo-tema" placeholder="☀️" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+            </div>
 
             <div style="margin-top: 8px;">
                 <label style="font-size:0.82rem; font-weight:700; color:#555;">URL pública del juego</label>
@@ -487,6 +501,9 @@
                 .then(c => {
                     document.getElementById('cfg-nombre').value = c.evento.nombre || '';
                     document.getElementById('cfg-subtitulo').value = c.evento.subtitulo || '';
+                document.getElementById('cfg-emoji1').value = c.evento.emoji_1 || '';
+                document.getElementById('cfg-emoji2').value = c.evento.emoji_2 || '';
+                document.getElementById('cfg-emoji3').value = c.evento.emoji_3 || '';
                     document.getElementById('cfg-url').value = c.config.url_publica || '';
                     document.getElementById('url-actual-display').textContent = 'URL actual: ' + (c.config.url_publica || '—');
                 });
@@ -543,6 +560,9 @@
                         preguntas: _preguntasGeneradas,
                         evento_nombre: document.getElementById('cfg-nombre').value.trim(),
                         evento_subtitulo: document.getElementById('cfg-subtitulo').value.trim(),
+                        emoji_1: document.getElementById('cfg-emoji1').value.trim(),
+                        emoji_2: document.getElementById('cfg-emoji2').value.trim(),
+                        emoji_3: document.getElementById('cfg-emoji3').value.trim(),
                         url_publica: document.getElementById('cfg-url').value.trim()
                     })
                 });
@@ -629,6 +649,9 @@
                         preguntas: _preguntasDesdeArchivo,
                         evento_nombre: nombre,
                         evento_subtitulo: subtitulo,
+                        emoji_1: document.getElementById('cfg-emoji1').value.trim(),
+                        emoji_2: document.getElementById('cfg-emoji2').value.trim(),
+                        emoji_3: document.getElementById('cfg-emoji3').value.trim(),
                         url_publica: url
                     })
                 });

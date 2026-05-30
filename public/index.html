@@ -563,7 +563,11 @@
                 document.title = c.evento.nombre + ' 🇦🇷';
 
                 // Login
-                document.getElementById('login-emojis').textContent   = c.evento.emojis_header;
+                const e1 = c.evento.emoji_1 || '';
+                const e2 = c.evento.emoji_2 || '';
+                const e3 = c.evento.emoji_3 || '';
+                const headerEmojis = [e1, e2, e3].filter(Boolean).join(' ');
+                document.getElementById('login-emojis').textContent   = headerEmojis || c.evento.emojis_header || '';
                 document.getElementById('login-titulo').textContent    = c.login.titulo;
                 document.getElementById('login-subtitulo').textContent = c.login.subtitulo;
                 document.getElementById('username-display').placeholder = c.login.placeholder_input;

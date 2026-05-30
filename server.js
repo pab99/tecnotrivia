@@ -275,7 +275,7 @@ app.post('/admin/generar-ia', async (req, res) => {
 // ── ENDPOINT ADMIN: Cambiar tema guardando directamente en MongoDB ──────────────────────────
 app.post('/admin/cambiar-tema', async (req, res) => {
     try {
-        const { preguntas, evento_nombre, evento_subtitulo, url_publica } = req.body;
+        const { preguntas, evento_nombre, evento_subtitulo, emoji_1, emoji_2, emoji_3, url_publica } = req.body;
 
         if (!preguntas || !Array.isArray(preguntas) || preguntas.length < 10) {
             return res.status(400).json({ ok: false, error: 'Se necesitan al menos 10 preguntas.' });
@@ -294,6 +294,10 @@ app.post('/admin/cambiar-tema', async (req, res) => {
             contenido.login.titulo                 = '¡' + evento_nombre + '!';
             contenido.leaderboard.titulo_principal = evento_nombre;
             contenido.resultados.url_reinicio       = url_publica;
+            if (emoji_1 !== undefined) contenido.evento.emoji_1 = emoji_1;
+            if (emoji_2 !== undefined) contenido.evento.emoji_2 = emoji_2;
+            if (emoji_3 !== undefined) contenido.evento.emoji_3 = emoji_3;
+            contenido.evento.emojis_header = [emoji_1, emoji_2, emoji_3].filter(Boolean).join(' ') || contenido.evento.emojis_header;
 
             await dbConfig.updateOne(
                 { tipo: "contenido_actual" },

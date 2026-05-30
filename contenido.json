@@ -10,7 +10,10 @@
     "emoji_principal": "☀️",
     "emojis_header": "🇦🇷 🏛️ ☀️ 🇦🇷",
     "subtitulo": "Revolución de Mayo",
-    "footer": "(R) Tecnoincas.com.ar"
+    "footer": "(R) Tecnoincas.com.ar",
+    "emoji_1": "🇦🇷",
+    "emoji_2": "🏛️",
+    "emoji_3": "☀️"
   },
   "login": {
     "titulo": "¡Gran Trivia de Mayo!",
@@ -29,17 +32,17 @@
     "cargando": "Cargando pregunta..."
   },
   "resultados": {
-    "victoria_titulo": "¡Ronda completada! 🥇",
-    "victoria_mensaje": "¡Felicitaciones! Completaste las 10 preguntas con éxito.",
-    "derrota_titulo": "¡Hasta la próxima! 🖤",
-    "derrota_mensaje": "Te quedaste sin vidas. ¡Volvé a intentarlo!",
+    "victoria_titulo": "¡Sos un gran ganador! 🏆",
+    "victoria_mensaje": "¡Felicitaciones! Completaste la ronda. Pero podés dar más, ¡volvé al juego con más energía y superá tus límites!",
+    "derrota_titulo": "¡Uh, casi! 💪",
+    "derrota_mensaje": "No pudimos completar el juego esta vez... ¡Volvé por una revancha!",
     "label_puesto": "Puesto",
     "label_puntaje": "Puntaje",
     "btn_reiniciar": "🔄 Volver a Jugar"
   },
   "leaderboard": {
     "titulo_principal": "Gran Trivia de Mayo",
-    "titulo_dato_historico": "¡Más sabés, más ganás!",
+    "titulo_dato_historico": "Datos Curiosos 🧠",
     "sabiasque_titulo": "💡 ¿Sabías que...?",
     "btn_sumate": "¡Sumate a Jugar!",
     "instruccion_qr": "Escaneá el código QR con tu celular, ingresá tu Instagram y participá en vivo 🇦🇷",
