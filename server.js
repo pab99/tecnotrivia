@@ -19,7 +19,7 @@ const io = new Server(server, {
 
 app.use(express.static('public'));
 
-// Variables globales de configuración y estado en memoria
+// Variables globales de configuración y estado en memorias
 let contenido = null;
 let preguntasTodo = [];
 let jugadores = {}; 
