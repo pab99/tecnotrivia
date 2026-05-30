@@ -158,38 +158,43 @@ El formato de cada elemento debe ser exactamente:
 {"id": N, "pregunta": "...", "correcta": "...", "incorrectas": ["...", "...", "..."]}
 Numerá del 1 al 50. Las respuestas deben ser concisas (máximo 8 palabras). Las preguntas deben ser variadas y de dificultad progresiva.`;
 
-        // Lee la clave de forma ultra segura inyectada por Render
-        const GOOGLE_CLOUD_TOKEN = process.env.GEMINI_TOKEN; 
-        
-        if (!GOOGLE_CLOUD_TOKEN) {
-            throw new Error("No se detectó la variable de entorno GEMINI_TOKEN en el servidor.");
-        }
-        
-        const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-        const response = await fetch(urlApi, {
+        if (!OPENROUTER_API_KEY) {
+            throw new Error("No se detectó la variable de entorno OPENROUTER_API_KEY.");
+        }
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GOOGLE_CLOUD_TOKEN}`
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`
             },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: promptFinal }] }]
+                model: 'deepseek/deepseek-chat-v3-0324:free',
+                messages: [
+                    {
+                        role: 'user',
+                        content: promptFinal
+                    }
+                ],
+                temperature: 0.8,
+                response_format: { type: 'json_object' }
             })
         });
 
         if (!response.ok) {
             const errorBody = await response.text();
-            throw new Error(`Google API respondió con código status ${response.status}. Detalles: ${errorBody}`);
+            throw new Error(`OpenRouter respondió con código ${response.status}. Detalles: ${errorBody}`);
         }
 
         const dataJson = await response.json();
-        
-        if (!dataJson.candidates || !dataJson.candidates[0] || !dataJson.candidates[0].content) {
-            throw new Error("La IA de Google devolvió una estructura de datos vacía o inválida.");
+
+        if (!dataJson.choices || !dataJson.choices[0]?.message?.content) {
+            throw new Error("OpenRouter devolvió una respuesta inválida.");
         }
 
-        let responseText = dataJson.candidates[0].content.parts[0].text.trim();
+        let responseText = dataJson.choices[0].message.content.trim();
 
         if (responseText.startsWith("```")) {
             responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
