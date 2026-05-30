@@ -189,7 +189,7 @@ header {
             box-shadow: 0 2px 0 #ef9a9a;
         }
         .teclado .btn-action {
-            grid-column: span 2;
+            grid-column: span 8;
             background: var(--azul-oscuro);
             color: var(--amarillo);
             border-color: var(--azul-medio);
@@ -863,7 +863,7 @@ header {
             clearInterval(timerInterval);
             cambiarPantalla('pantalla-fin');
             const c = window._contenido;
-            document.getElementById('fin-icono').textContent   = (c && c.resultados.emoji_derrota)  || '⭐';
+            document.getElementById('fin-icono').textContent   = '💀';
             document.getElementById('fin-titulo').textContent  = (c && c.resultados.derrota_titulo)  || '¡Fin de la partida!';
             document.getElementById('fin-mensaje').textContent = (c && c.resultados.derrota_mensaje) || 'Gracias por jugar.';
             document.getElementById('fin-puesto').textContent  = `#${res.puesto}`;
