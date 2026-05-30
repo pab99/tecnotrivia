@@ -156,36 +156,7 @@ app.post('/admin/generar-ia', async (req, res) => {
             });
         }
  
-        const promptFinal = `
-Generá exactamente 50 preguntas de trivia en español sobre:
- 
-"${tema}"
- 
-IMPORTANTE:
- 
-- Respondé únicamente JSON.
-- Sin markdown.
-- Sin explicaciones.
-- Sin texto adicional.
-- Sin encabezados.
- 
-Formato EXACTO:
- 
-[
-  {
-    "id": 1,
-    "pregunta": "Pregunta",
-    "correcta": "Respuesta correcta",
-    "incorrectas": [
-      "Incorrecta 1",
-      "Incorrecta 2",
-      "Incorrecta 3"
-    ]
-  }
-]
- 
-Generar exactamente 50 preguntas.
-`;
+        const promptFinal = `Generá exactamente 20 preguntas de trivia en español sobre: "${tema}". Respondé ÚNICAMENTE con un array JSON válido, sin texto antes ni después, sin markdown, sin comentarios. Formato exacto: [{"id":1,"pregunta":"...","correcta":"...","incorrectas":["...","...","..."]},{"id":2,...}]`;
  
         const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
  
@@ -232,9 +203,12 @@ Generar exactamente 50 preguntas.
  
         console.log(`✅ Respuesta recibida via modelo: ${modeloUsado}`);
  
+        // Limpiar markdown y texto basura
         contenidoIA = contenidoIA
             .replace(/```json/gi, '')
             .replace(/```/g, '')
+            .replace(/[\u201C\u201D]/g, '"')  // comillas tipográficas
+            .replace(/[\u2018\u2019]/g, "'")
             .trim();
  
         const inicio = contenidoIA.indexOf('[');
@@ -244,11 +218,22 @@ Generar exactamente 50 preguntas.
             throw new Error('La IA no devolvió un array JSON válido');
         }
  
-        contenidoIA =
-            contenidoIA.substring(inicio, fin + 1);
+        contenidoIA = contenidoIA.substring(inicio, fin + 1);
  
-        const preguntasValidadas =
-            JSON.parse(contenidoIA);
+        // Intentar reparar JSON truncado: eliminar último objeto incompleto
+        let preguntasValidadas;
+        try {
+            preguntasValidadas = JSON.parse(contenidoIA);
+        } catch (parseErr) {
+            // Cortar en la última coma antes del objeto incompleto y cerrar el array
+            const ultimaComa = contenidoIA.lastIndexOf('},');
+            if (ultimaComa !== -1) {
+                contenidoIA = contenidoIA.substring(0, ultimaComa + 1) + ']';
+                preguntasValidadas = JSON.parse(contenidoIA);
+            } else {
+                throw new Error('JSON malformado y no reparable: ' + parseErr.message);
+            }
+        }
  
         if (!Array.isArray(preguntasValidadas)) {
             throw new Error('La respuesta no es un array');
