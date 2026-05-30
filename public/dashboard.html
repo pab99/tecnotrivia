@@ -3,573 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control Profesional & Analítica - Trivia ☀️</title>
+    <title>Panel de Control & Analítica - Trivia de Mayo 🇦🇷</title>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --azul-oscuro: #0d2c54;
-            --azul-medio: #1a4a7a;
             --celeste: #74b9ff;
             --amarillo-sol: #fbcb3b;
             --rojo-error: #ff7675;
             --verde-exito: #2ecc71;
             --gris-claro: #f5f6fa;
-            --gris-texto: #546e7a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f4f8;
+            background: #f8f9fa;
             color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Sección de Login Obligatorio */
         #seccion-login {
             margin: auto;
-            max-width: 420px;
+            max-width: 400px;
             width: 100%;
-            padding: 30px;
+            padding: 20px;
             background: white;
             border: 3px solid var(--azul-oscuro);
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
+            margin-top: 10vh;
         }
 
-        #seccion-login h2 { color: var(--azul-oscuro); margin-bottom: 10px; }
-        #seccion-login p { color: var(--gris-texto); font-size: 0.9rem; margin-bottom: 20px; }
-
-        /* Contenedor Principal del Dashboard */
-        #panel-control {
-            display: none; /* Oculto hasta loguearse */
-            flex: 1;
-            padding: 20px;
-            max-width: 1300px;
+        .input-login {
             width: 100%;
-            margin: 10px auto;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
         }
 
-        .header-dashboard {
+        #seccion-dashboard {
+            display: none;
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .header-dash {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--azul-oscuro);
+            border-bottom: 4px solid var(--azul-oscuro);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .grid-paneles {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-paneles { grid-template-columns: 1fr; }
+        }
+
+        .tarjeta-control {
+            background: white;
+            border: 2px solid var(--azul-oscuro);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .tarjeta-control h3 {
+            color: var(--azul-oscuro);
+            margin-bottom: 15px;
+            border-left: 5px solid var(--celeste);
+            padding-left: 10px;
+        }
+
+        .btn-dash {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            font-size: 1rem;
+            font-weight: bold;
             color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .menu-pestanas {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #cbd5e1;
-            padding-bottom: 10px;
-        }
-
-        .btn-pestana {
-            padding: 12px 24px;
             border: none;
-            background: #e2e8f0;
             border-radius: 8px;
             cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-pdf { background-color: #e74c3c; }
+        .btn-json { background-color: var(--azul-oscuro); }
+        .btn-reset { background-color: #7f8c8d; }
+        .btn-reset.peligo { background-color: var(--rojo-error); }
+
+        /* 📊 GRÁFICO RECONFIGURADO DE 11 COLUMNAS */
+        .grafico-linea {
+            background: var(--gris-claro);
+            height: 180px;
+            border-bottom: 2px solid #555;
+            border-left: 2px solid #555;
+            position: relative;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 0 5px;
+        }
+
+        .punto-curva {
+            width: 28px;
+            background: var(--celeste);
+            border-radius: 4px 4px 0 0;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--azul-oscuro);
             font-weight: bold;
-            color: #475569;
-            transition: all 0.2s;
+            padding-top: 4px;
+            transition: height 0.5s ease;
+            min-height: 18px;
+        }
+
+        .eje-x-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.72rem;
+            color: #7f8c8d;
+            padding: 0 2px;
+        }
+
+        .barra-porcentaje-contenedor { margin: 15px 0; }
+        .barra-porcentaje-lbl { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
+        .barra-progreso { background: #dfe6e9; height: 18px; border-radius: 10px; overflow: hidden; }
+        .barra-progreso-llenado { height: 100%; background: var(--amarillo-sol); transition: width 0.5s ease; }
+
+        .tabla-auditoria {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .tabla-auditoria th {
+            background-color: var(--azul-oscuro);
+            color: white;
+            text-align: left;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .tabla-auditoria td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tabla-auditoria tr:nth-child(even) { background-color: var(--gris-claro); }
+        .tabla-auditoria .txt-puntos-tabla { font-weight: bold; color: var(--verde-exito); }
+        .txt-hora { color: #7f8c8d; font-family: monospace; font-size: 0.95rem; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-        }
-
-        .btn-pestana.active {
-            background: var(--azul-medio);
-            color: white;
-        }
-
-        .tarjeta {
             background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
+            border-top: 1px solid #ddd;
+            margin-top: auto;
         }
 
-        /* Grilla de Métricas Avanzadas */
-        .grid-metricas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+        .logo-tecnoincas {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, var(--amarillo-sol) 0deg 30deg, #d4a314 30deg 60deg);
+            border: 2px solid #555;
+            display: inline-block;
+            position: relative;
+        }
+        .logo-tecnoincas::after {
+            content: ''; position: absolute; width: 6px; height: 6px; background: #95a5a6; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #555;
         }
 
-        .bloque-numero { text-align: center; position: relative; }
-        .bloque-numero h4 { color: var(--gris-texto); font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .bloque-numero .valor { font-size: 2.3rem; font-weight: 800; color: var(--azul-oscuro); }
-
-        .tabla-ranking { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .tabla-ranking th, .tabla-ranking td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .tabla-ranking th { background: var(--gris-claro); color: var(--azul-oscuro); font-weight: 700; }
-
-        .form-grupo { margin-bottom: 15px; }
-        .form-grupo label { display: block; font-weight: 600; margin-bottom: 5px; color: var(--azul-oscuro); }
-        .form-grupo input, .form-grupo textarea {
-            width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; font-family: inherit;
+        /* ── SECCIÓN CAMBIO DE TEMA IA ── */
+        .btn-ia { background: linear-gradient(135deg, #6c3483, #a569bd); }
+        .btn-aplicar { background: #27ae60; }
+        .btn-aplicar:disabled { background: #95a5a6; cursor: not-allowed; }
+        .campo-tema {
+            width: 100%; padding: 10px 14px; margin: 8px 0;
+            border: 2px solid #ced4da; border-radius: 8px;
+            font-size: 0.95rem; font-family: inherit;
+            transition: border-color 0.2s;
         }
+        .campo-tema:focus { outline: none; border-color: var(--celeste); }
+        .preview-preguntas {
+            background: var(--gris-claro); border-radius: 10px;
+            padding: 14px; margin-top: 14px;
+            border-left: 4px solid #a569bd;
+            display: none;
+        }
+        .preview-preguntas h4 { color: #6c3483; margin-bottom: 10px; font-size: 0.9rem; }
+        .preview-item {
+            background: white; border-radius: 6px; padding: 10px 12px;
+            margin-bottom: 8px; font-size: 0.85rem; border: 1px solid #e0d5f0;
+        }
+        .preview-item .pq { color: #333; font-weight: 600; margin-bottom: 3px; }
+        .preview-item .pa { color: #27ae60; font-size: 0.82rem; }
+        .estado-ia {
+            padding: 10px 14px; border-radius: 8px; margin-top: 10px;
+            font-size: 0.88rem; font-weight: 600; display: none;
+        }
+        .estado-ia.generando { background: #fef9e7; color: #d68910; border: 1px solid #f9e79f; }
+        .estado-ia.ok { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+        .estado-ia.error { background: #fdedec; color: #c0392b; border: 1px solid #f5b7b1; }
+        .url-actual {
+            font-size: 0.8rem; color: #7f8c8d; margin-top: 4px;
+            font-family: monospace; word-break: break-all;
+        }
+        .separador-tema { border: none; border-top: 2px dashed #e0d5f0; margin: 16px 0; }
         
-        /* Botonera y Acciones */
-        .area-acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-
-        .btn-accion {
-            padding: 12px 24px; background: var(--azul-oscuro); color: white;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;
-            display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+        @media print {
+            body { background: white; color: black; }
+            #seccion-login, .header-dash, .tarjeta-control-operativa, footer { display: none !important; }
+            #seccion-dashboard { display: block !important; margin: 0; padding: 0; width: 100%; }
+            .grid-paneles { grid-template-columns: 1fr; gap: 0; }
+            .tarjeta-control { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; page-break-inside: avoid; }
+            .punto-curva { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #74b9ff !important; }
+            .barra-progreso-llenado { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #fbcb3b !important; }
+            .tabla-auditoria { page-break-inside: auto; width: 100% !important; }
+            .tabla-auditoria tr { page-break-inside: avoid; page-break-after: auto; }
+            .print-footer-fijo { display: flex !important; align-items: center; justify-content: center; gap: 8px; margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; font-size: 0.85rem; color: #000; }
         }
-        .btn-accion:hover { background: var(--azul-medio); }
-        .btn-accion:disabled { background: #94a3b8; cursor: not-allowed; }
-        .btn-peligro { background: var(--rojo-error); }
-        .btn-peligro:hover { background: #e25555; }
-        .btn-secundario { background: #475569; }
-        .btn-secundario:hover { background: #334155; }
 
-        .estado-ia { padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: 600; display: none; }
-        .estado-ia.ok { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .estado-ia.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-        .preview-box { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; max-height: 250px; overflow-y: auto; margin-top: 15px; white-space: pre-wrap; }
-        
-        /* Estilos específicos para el Reporte PDF Impreso */
-        #reporte-impresion { padding: 10px; }
-        .pdf-footer { display: none; text-align: center; margin-top: 30px; font-size: 0.8rem; color: var(--gris-texto); }
+        .print-footer-fijo { display: none; }
     </style>
 </head>
 <body>
 
     <div id="seccion-login">
-        <h2>🔒 Acceso Administrativo</h2>
-        <p>Introduce las credenciales máster para gestionar la auditoría de la trivia.</p>
-        <div class="form-grupo" style="text-align: left;">
-            <label>Usuario Supervisor:</label>
-            <input type="text" id="login-user" value="admin" autocomplete="off">
-        </div>
-        <div class="form-grupo" style="text-align: left;">
-            <label>Contraseña Clave:</label>
-            <input type="password" id="login-pass" placeholder="••••••••">
-        </div>
-        <button id="btn-entrar-login" class="btn-accion" style="width: 100%; justify-content: center; padding: 14px;">Ingresar al Panel Seguro</button>
-        <div id="error-login" style="color: var(--rojo-error); font-weight: bold; margin-top: 10px; display: none;">❌ Credenciales inválidas</div>
+        <h2 id="dash-titulo-login" style="color: var(--azul-oscuro); margin-bottom: 10px;">Acceso Consultoría</h2>
+        <p id="dash-subtitulo-login" style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ingresá las credenciales del evento</p>
+        <input type="text" id="input-usuario" class="input-login" placeholder="Usuario Corporativo">
+        <input type="password" id="input-clave" class="input-login" placeholder="Contraseña">
+        <button id="dash-btn-ingresar" class="btn-dash btn-json" onclick="autenticar()" style="margin-top: 15px;">INGRESAR AL PANEL</button>
     </div>
 
-    <div id="panel-control">
-        
-        <div class="header-dashboard">
+    <div id="seccion-dashboard">
+        <div class="header-dash">
             <div>
-                <h1 id="header-titulo-evento">Cargando evento...</h1>
-                <p id="header-subtitulo-evento">Consola de Control Centralizado</p>
+                <h1 id="dash-titulo-panel">Dashboard de Auditoría</h1>
+                <p id="dash-subtitulo-panel" style="color: #7f8c8d;">Estadísticas de participación y rendimiento en tiempo real</p>
             </div>
-            <button id="btn-cerrar-sesion" class="btn-accion btn-peligro" style="padding: 8px 16px; font-size: 0.85rem;">🔒 Salir</button>
-        </div>
-        
-        <div class="menu-pestanas">
-            <button id="tab-metricas" class="btn-pestana active">📊 Métricas y Reportes Ejecutivos</button>
-            <button id="tab-ia" class="btn-pestana">🤖 Generador de Temas IA Real</button>
+            <div style="font-weight: bold; background: var(--gris-claro); padding: 10px 20px; border-radius: 8px; border: 1px solid #ddd;">
+                ⚙️ Conexión: <span style="color: var(--verde-exito);">Estable (JSON)</span>
+            </div>
         </div>
 
-        <div id="pestana-metricas" class="seccion-pestana">
+        <div class="grid-paneles">
+            <div>
+                <div class="tarjeta-control tarjeta-control-operativa">
+                    <h3>Acciones Operativas</h3>
+                    <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Gestioná los datos recolectados físicamente en el disco.</p>
+                    <button class="btn-dash btn-pdf" onclick="window.print()">🖨️ Imprimir Reporte PDF</button>
+                    <button class="btn-dash btn-json" onclick="descargarBaseDatos()">💾 Descargar Base (.json)</button>
+                    <button id="btn-reset-sistema" class="btn-dash btn-reset" onclick="ejecutarResetCompleto()">🗑️ Limpiar Lista de Usuarios</button>
+                </div>
+
+                <div class="tarjeta-control">
+                    <h3>Resumen General</h3>
+                    <div style="margin-top: 10px; font-size: 1.1rem; line-height: 1.8;">
+                        <div>• Total Participantes: <strong id="lbl-total-usr">0</strong></div>
+                        <div>• Récord Máximo Real: <strong id="lbl-max-puntos" style="color: var(--verde-exito);">0 pts</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="tarjeta-control">
+                    <h3>Curva de Ingreso Real de Usuarios (Por Hora)</h3>
+                    <div class="grafico-linea">
+                        <div id="curva-h10" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h11" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h12" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h13" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h14" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h15" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h16" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h17" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h18" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h19" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h20" class="punto-curva" style="height: 0%;">0</div>
+                    </div>
+                    <div class="eje-x-labels">
+                        <span>10h</span><span>11h</span><span>12h</span><span>13h</span><span>14h</span><span>15h</span><span>16h</span><span>17h</span><span>18h</span><span>19h</span><span>20h</span>
+                    </div>
+                </div>
+
+                <div class="tarjeta-control">
+                    <h3>Distribución de Rendimiento (% de Aciertos)</h3>
+                    <div class="barra-porcentaje-contenedor">
+                        <div class="barra-porcentaje-lbl"><span>Completo (100% efectividad)</span><span id="lbl-pct-alto">0%</span></div>
+                        <div class="barra-progreso"><div id="barra-pct-alto" class="barra-progreso-llenado" style="width: 0%; background-color: var(--verde-exito);"></div></div>
+                    </div>
+                    <div class="barra-porcentaje-contenedor">
+                        <div class="barra-porcentaje-lbl"><span>Rendimiento Regular/Bajo (&lt; 100%)</span><span id="lbl-pct-bajo">0%</span></div>
+                        <div class="barra-progreso"><div id="barra-pct-bajo" class="barra-progreso-llenado" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tarjeta-control" style="width: 100%;">
+            <h3>Listado Oficial de Participantes (Ordenado por Ranking Real)</h3>
+            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">Datos leídos dinámicamente desde el archivo persistentente.</p>
             
-            <div class="tarjeta">
-                <h3>🛠️ Operaciones Avanzadas e Infraestructura de Datos</h3>
-                <p style="color: var(--gris-texto); font-size: 0.9rem; margin-bottom: 15px;">Gestiona el ciclo de vida de la base de datos de jugadores, descarga respaldos o emite reportes auditados.</p>
-                <div class="area-acciones">
-                    <button id="btn-pdf" class="btn-accion" style="background: #e67e22;">📄 Exportar Reporte PDF Oficial</button>
-                    <button id="btn-json" class="btn-accion btn-secundario">📥 Descargar Base Jugadores (JSON)</button>
-                    <button id="btn-limpiar-db" class="btn-accion btn-peligro">🗑️ Reiniciar Base de Jugadores (Cero Inicial)</button>
-                </div>
-            </div>
-
-            <div id="reporte-impresion">
-                <div class="grid-metricas">
-                    <div class="tarjeta Schuyler bloque-numero">
-                        <h4>Usuarios Conectados / Activos</h4>
-                        <div id="m-conectados" class="valor">0</div>
-                    </div>
-                    <div class="tarjeta bloque-numero">
-                        <h4>Total Participantes Registrados</h4>
-                        <div id="m-registrados" class="valor">0</div>
-                    </div>
-                    <div class="tarjeta bloque-numero">
-                        <h4>Puntaje Máximo Registrado</h4>
-                        <div id="m-maxpuntos" class="valor">0 Pts</div>
-                    </div>
-                    <div class="tarjeta bloque-numero">
-                        <h4>Efectividad / Nivel de Aciertos</h4>
-                        <div id="m-acierto" class="valor">0%</div>
-                    </div>
-                </div>
-
-                <div class="tarjeta">
-                    <h3 id="titulo-tabla-dinamica">👥 Tabla General de Posiciones Auditada</h3>
-                    <p style="font-size: 0.85rem; color: var(--gris-texto); margin-bottom: 10px;" id="pdf-meta-fecha"></p>
-                    <table class="tabla-ranking">
-                        <thead>
-                            <tr>
-                                <th>Posición</th>
-                                <th>Usuario (Instagram)</th>
-                                <th>Puntaje Acumulado</th>
-                                <th>Puntos Ronda</th>
-                                <th>Vidas Restantes</th>
-                                <th>Rendimiento / Aciertos</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-usuarios-body">
-                            <tr>
-                                <td colspan="6" style="text-align:center; color:#888; padding: 20px;">Esperando sincronización de datos con el servidor central...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="pdf-footer">Reporte Generado de Forma Automatizada - Consola de Auditoría de Trivia Corporativa</div>
-            </div>
+            <table class="tabla-auditoria">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Puesto</th>
+                        <th style="width: 43%;">Usuario de Instagram</th>
+                        <th style="width: 20%; text-align: center;">Hora Participación</th>
+                        <th style="width: 25%; text-align: right;">Puntaje Máximo Histórico</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios-cuerpo">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999;">Esperando autenticación...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div id="pestana-ia" class="seccion-pestana" style="display: none;">
-            <div class="tarjeta">
-                <h3>🤖 Inyección de Preguntas mediante Inteligencia Artificial</h3>
-                <p style="color:#666; font-size:0.9rem; margin-bottom: 20px;">
-                    Define un tema específico para el evento. El motor llamará a Google Gemini de forma directa e inyectará 50 preguntas reales estructuradas jerárquicamente en tu base de datos de MongoDB Atlas.
+        <div class="tarjeta-control" style="width: 100%; border-color: #a569bd; margin-top: 10px;">
+            <h3 style="border-left-color: #a569bd;">🤖 Configuración del Evento</h3>
+            <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 16px;">
+                Cambiá el tema, regenerá las preguntas con IA y actualizá la URL sin tocar ningún archivo.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Nombre del evento</label>
+                    <input id="cfg-nombre" class="campo-tema" placeholder="Ej: Gran Trivia del Mar 2026">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Subtítulo / Descripción corta</label>
+                    <input id="cfg-subtitulo" class="campo-tema" placeholder="Ej: Ballenas y Océanos">
+                </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <label style="font-size:0.82rem; font-weight:700; color:#555;">URL pública del juego</label>
+                <input id="cfg-url" class="campo-tema" placeholder="https://mi-trivia.onrender.com">
+                <div class="url-actual" id="url-actual-display">Cargando URL actual...</div>
+            </div>
+
+            <hr class="separador-tema">
+
+            <label style="font-size:0.82rem; font-weight:700; color:#555;">Tema para las preguntas</label>
+            <input id="cfg-tema" class="campo-tema" placeholder="Ej: la vida de las ballenas en el océano austral">
+            <p style="font-size:0.78rem; color:#999; margin-top:2px;">Gemini generará 50 preguntas con 4 opciones cada una sobre este tema.</p>
+
+            <button class="btn-dash btn-ia" onclick="generarConIA()" style="margin-top: 12px;">
+                ✨ Generar 50 preguntas con IA
+            </button>
+
+            <div class="estado-ia" id="estado-ia"></div>
+
+            <div class="preview-preguntas" id="preview-preguntas">
+                <h4>👁️ Vista previa — primeras 5 preguntas generadas</h4>
+                <div id="preview-lista"></div>
+                <p style="font-size:0.78rem; color:#888; margin-top:8px;">
+                    Se generaron <strong id="total-generadas">0</strong> preguntas en total. Revisá las primeras 5 y confirmá para aplicar.
                 </p>
-
-                <div class="form-grupo">
-                    <label>Nombre Principal del Evento:</label>
-                    <input type="text" id="input-evento-nombre" value="Gran Trivia Temática">
-                </div>
-
-                <div class="form-grupo">
-                    <label>Subtítulo / Bajada:</label>
-                    <input type="text" id="input-evento-subtitulo" value="Edición Especial Corporativa">
-                </div>
-
-                <div class="form-grupo">
-                    <label>URL Pública del Servidor en Render (Sin barra final):</label>
-                    <input type="text" id="input-url-publica" value="https://tecnotrivia.onrender.com">
-                    <span id="url-actual-display" style="font-size:0.85rem; color:#0288d1; font-weight:bold;"></span>
-                </div>
-
-                <div class="form-grupo">
-                    <label>Escribe el TEMA exacto para que la IA diseñe el set de 50 preguntas:</label>
-                    <textarea id="input-prompt-ia" rows="4" placeholder="Ejemplo: La vida, ecosistema e historia migratoria de las ballenas francas en el océano Atlántico..."></textarea>
-                </div>
-
-                <button class="btn-accion" id="btn-generar">Generar 50 Preguntas Reales con Gemini IA</button>
-                
-                <div id="preview-preguntas" style="display:none;">
-                    <h4 style="margin-top:20px; color:var(--azul-oscuro);">📋 Muestra Estructurada del Contenido Generado (Primeras 3 preguntas):</h4>
-                    <div class="preview-box" id="json-preview"></div>
-                    <button class="btn-accion" id="btn-aplicar-tema" style="background:var(--verde-exito); margin-top:15px;">⚡ Guardar Preguntas y Sincronizar en MongoDB Atlas</button>
-                </div>
-
-                <div id="estado-ia" class="estado-ia"></div>
             </div>
+
+            <button class="btn-dash btn-aplicar" id="btn-aplicar-tema" onclick="aplicarTema()" disabled style="margin-top: 12px;">
+                ✅ Confirmar y Aplicar al Evento
+            </button>
         </div>
 
+        <div class="print-footer-fijo">
+            <div class="logo-tecnoincas"></div>
+            <span id="dash-footer-reporte">Reporte Oficial de Auditoría - (R) Tecnoincas.com.ar</span>
+        </div>
     </div>
+
+    <footer>
+        <div class="logo-tecnoincas"></div>
+        <span id="dash-footer">(R) Tecnoincas.com.ar</span>
+    </footer>
 
     <script>
-        const socket = io();
-        let _preguntasGeneradas = null;
-        let listaJugadoresGlobal = [];
-
-        // Clave máster oficial para llamadas directas sin SDK intermedio
+        // Clave máster oficial para llamadas directas
         const GEMINI_API_KEY = "AQ.Ab8RN6L5_rxLFq8wlH0aciDxAr8Un2JJrXA6xzyfIxwwkS6Y2A";
 
-        // ASIGNACIÓN TOTAL DE ENLACES AL CARGAR EL DOM
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("btn-entrar-login").addEventListener("click", validarLogin);
-            document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
-            document.getElementById("tab-metricas").addEventListener("click", () => cambiarPestaña('metricas'));
-            document.getElementById("tab-ia").addEventListener("click", () => cambiarPestaña('ia'));
-            document.getElementById("btn-generar").addEventListener("click", generarPreguntasConIAReal);
-            document.getElementById("btn-aplicar-tema").addEventListener("click", aplicarTemaEnServidor);
-            document.getElementById("btn-pdf").addEventListener("click", exportarReportePDF);
-            document.getElementById("btn-json").addEventListener("click", descargarRespaldoJSON);
-            document.getElementById("btn-limpiar-db").addEventListener("click", limpiarBaseDeDatos);
-            
-            document.getElementById("pdf-meta-fecha").textContent = "Fecha de emisión del reporte: " + new Date().toLocaleString();
-        });
+        // ── CARGAR CONTENIDO DESDE JSON ──
+        fetch('/contenido.json')
+            .then(r => r.json())
+            .then(c => {
+                const d = c.dashboard;
+                document.title = d.titulo_panel + ' — ' + c.evento.nombre;
+                document.getElementById('dash-titulo-login').textContent     = d.titulo_login;
+                document.getElementById('dash-subtitulo-login').textContent  = d.subtitulo_login;
+                document.getElementById('input-usuario').placeholder         = d.placeholder_usuario;
+                document.getElementById('input-clave').placeholder           = d.placeholder_clave;
+                document.getElementById('dash-btn-ingresar').textContent     = d.btn_ingresar;
+                document.getElementById('dash-titulo-panel').textContent     = d.titulo_panel;
+                document.getElementById('dash-subtitulo-panel').textContent  = d.subtitulo_panel;
+                document.getElementById('dash-footer-reporte').textContent   = d.footer_reporte;
+                document.getElementById('dash-footer').textContent           = c.evento.footer;
+            })
+            .catch(() => {});
 
-        // VALIDACIÓN DE CREDENCIALES ADMINISTRATIVAS (Clave Real)
-        function validarLogin() {
-            const user = document.getElementById("login-user").value.trim();
-            const pass = document.getElementById("login-pass").value;
+        const USUARIO_VALIDO = "admin";
+        const CLAVE_VALIDA = "tecnoincas2026";
+        let socket;
 
-            if (user === "admin" && pass === "tecnoincas2026") {
-                document.getElementById("seccion-login").style.display = "none";
-                document.getElementById("panel-control").style.display = "block";
+        function autenticar() {
+            const usr = document.getElementById('input-usuario').value;
+            const pass = document.getElementById('input-clave').value;
+
+            if (usr === USUARIO_VALIDO && pass === CLAVE_VALIDA) {
+                document.getElementById('seccion-login').style.display = 'none';
+                document.getElementById('seccion-dashboard').style.display = 'block';
+                inicializarConexionReal();
                 cargarConfigActual();
-                
-                // Activar canal de WebSockets
-                socket.emit('pedir_ranking_dashboard');
-                setInterval(() => { socket.emit('pedir_ranking_dashboard'); }, 4000);
             } else {
-                alert("❌ Usuario o Contraseña incorrectos.");
+                alert('Credenciales incorrectas. Verifique los datos.');
             }
         }
 
-        function cerrarSesion() {
-            document.getElementById("login-pass").value = "";
-            document.getElementById("panel-control").style.display = "none";
-            document.getElementById("seccion-login").style.display = "block";
+        function tokenizeUsername(username) {
+            if (!username) return '@anonimo';
+            return username.startsWith('@') ? username : '@' + username;
         }
 
-        function cambiarPestaña(pestana) {
-            document.getElementById('pestana-metricas').style.display = pestana === 'metricas' ? 'block' : 'none';
-            document.getElementById('pestana-ia').style.display = pestana === 'ia' ? 'block' : 'none';
-
-            document.getElementById('tab-metricas').className = pestana === 'metricas' ? 'btn-pestana active' : 'btn-pestana';
-            document.getElementById('tab-ia').className = pestana === 'ia' ? 'btn-pestana active' : 'btn-pestana';
-        }
-
-        // CONTROL DE MÉTRICAS EN TIEMPO REAL VÍA WEBSOCKETS
-        socket.on('data_ranking_dashboard', (listaJugadores) => {
-            listaJugadoresGlobal = listaJugadores; 
-            document.getElementById('m-registrados').textContent = listaJugadores.length;
-            
-            let maxPuntos = 0;
-            let conectados = 0;
-            let totalRespondidasGenerales = 0;
-            let totalCorrectasGenerales = 0;
-            let html = "";
-
-            listaJugadores.forEach((j, index) => {
-                if (j.puntos > maxPuntos) maxPuntos = j.puntos;
-                
-                if (j.vidas > 0 && j.respondidas && j.respondidas.length > 0 && j.respondidas.length < 10) {
-                    conectados++;
-                }
-
-                let respondidasUser = (j.respondidas || []).length;
-                let aciertosUser = (j.correctasContadas || 0);
-                totalRespondidasGenerales += respondidasUser;
-                totalCorrectasGenerales += aciertosUser;
-
-                let porcentajeIndividual = respondidasUser > 0 ? Math.round((aciertosUser / respondidasUser) * 100) : 0;
-
-                html += `<tr>
-                    <td><b>#${index + 1}</b></td>
-                    <td>@${j.username}</td>
-                    <td>${j.puntos} Pts</td>
-                    <td>${j.puntosRondaActual || 0} Pts</td>
-                    <td>${'❤️'.repeat(Math.max(0, j.vidas)) || '💀 Eliminado'}</td>
-                    <td><b>${porcentajeIndividual}%</b> (${aciertosUser}/${respondidasUser})</td>
-                </tr>`;
-            });
-
-            document.getElementById('m-maxpuntos').textContent = maxPuntos + " Pts";
-            document.getElementById('m-conectados').textContent = conectados;
-            
-            let porcentajeGeneralEfectividad = totalRespondidasGenerales > 0 ? Math.round((totalCorrectasGenerales / totalRespondidasGenerales) * 100) : 0;
-            document.getElementById('m-acierto').textContent = porcentajeGeneralEfectividad + "%";
-
-            if(listaJugadores.length > 0) {
-                document.getElementById('tabla-usuarios-body').innerHTML = html;
-            } else {
-                document.getElementById('tabla-usuarios-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">No hay jugadores registrados.</td></tr>`;
-            }
-        });
-
-        // REINICIAR JUGADORES A CERO
-        async function limpiarBaseDeDatos() {
-            if (!confirm("⚠️ ATENCIÓN MÁSTER:\n¿Estás completamente seguro de borrar todos los jugadores de MongoDB Atlas y vaciar el ranking?\nEsta acción es irreversible.")) return;
-
-            try {
-                const resp = await fetch('/admin/reiniciar-ranking', { method: 'POST' });
-                const resultado = await resp.json();
-                
-                if (resultado.ok) {
-                    alert("🗑️ Base de datos purgada. Servidor sincronizado en cero.");
-                    document.getElementById('m-registrados').textContent = "0";
-                    document.getElementById('m-maxpuntos').textContent = "0 Pts";
-                    document.getElementById('m-acierto').textContent = "0%";
-                    document.getElementById('m-conectados').textContent = "0";
-                } else {
-                    alert("Error: " + resultado.error);
-                }
-            } catch (err) {
-                alert("Error de conexión: " + err.message);
-            }
-        }
-
-        // COPIA DE RESPALDO EN JSON
-        function descargarRespaldoJSON() {
-            if(listaJugadoresGlobal.length === 0) return alert("No hay datos para exportar.");
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(listaJugadoresGlobal, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `respaldo_trivia.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-        }
-
-        // GENERACIÓN EXPORTACIÓN PDF
-        function exportarReportePDF() {
-            const elemento = document.getElementById('reporte-impresion');
-            const footer = elemento.querySelector('.pdf-footer');
-            footer.style.display = "block";
-
-            const opciones = {
-                margin:       15,
-                filename:     `Reporte_Auditoria_Trivia.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opciones).from(elemento).save().then(() => {
-                footer.style.display = "none";
-            });
-        }
-
-        // LLAMADA DIRECTA HTTP A GEMINI (Indestructible, sin librerías externas rotas)
-        async function generarPreguntasConIAReal() {
-            const tema = document.getElementById('input-prompt-ia').value.trim();
-            if(!tema) return alert("Ingresa un tema para que trabaje la Inteligencia Artificial.");
-
-            const btnGen = document.getElementById('btn-generar');
-            btnGen.disabled = true;
-            btnGen.textContent = "🧠 Gemini IA está redactando las 50 preguntas...";
-            mostrarEstado('Conectando directamente por HTTP con Google AI Studio. Aguarda unos 15 segundos...', 'ok');
-
-            try {
-                const promptFinal = `Genera un listado de exactamente 50 preguntas de trivia desafiantes, verídicas e interesantes sobre el siguiente tema: "${tema}".
-                Devuelve OBLIGATORIAMENTE un array JSON puro, sin formatos markdown (absolutamente prohibido usar bloques \`\`\`json ni texto introductorio), que cumpla con esta estructura exacta de campos:
-                [
-                  {
-                    "id": 1,
-                    "pregunta": "¿Texto real de la pregunta?",
-                    "correcta": "Respuesta correcta real en texto plano",
-                    "incorrectas": ["Opción incorrecta 1", "Opción incorrecta 2", "Opción incorrecta 3"]
-                  }
-                ]
-                Genera las 50 preguntas incrementando el campo id secuencialmente del 1 al 50. Asegúrate de que las opciones incorrectas sean verosímiles pero falsas.`;
-
-                // Petición nativa directa a la API de Google Gemini 1.5 Flash
-                const urlApi = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-                
-                const response = await fetch(urlApi, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptFinal }] }]
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP Error! Status: ${response.status}`);
-                }
-
-                const dataJson = await response.json();
-                
-                // Mapeo seguro del árbol de respuesta oficial de Google
-                let responseText = dataJson.candidates[0].content.parts[0].text.trim();
-
-                // Limpieza preventiva si el modelo incluye marcas markdown por inercia
-                if (responseText.startsWith("```")) {
-                    responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-                }
-
-                _preguntasGeneradas = JSON.parse(responseText);
-
-                if(!Array.isArray(_preguntasGeneradas) || _preguntasGeneradas.length === 0) {
-                    throw new Error("El modelo no devolvió una estructura matricial limpia.");
-                }
-
-                document.getElementById('json-preview').textContent = JSON.stringify(_preguntasGeneradas.slice(0, 3), null, 2) + `\n\n... [¡Set completado con éxito! Se cargaron las ${_preguntasGeneradas.length} preguntas en memoria]`;
-                document.getElementById('preview-preguntas').style.display = 'block';
-                mostrarEstado(`🎉 ¡Cuestionario de IA listo! Verificá la muestra y guardalo con el botón verde.`, 'ok');
-
-            } catch (err) {
-                console.error(err);
-                mostrarEstado('❌ Error de IA: No se pudo procesar el JSON limpio. Detalle: ' + err.message, 'error');
-            } finally {
-                btnGen.disabled = false;
-                btnGen.textContent = "Generar 50 Preguntas Reales con Gemini IA";
-            }
-        }
-
-        // GUARDADO FINAL EN MONGODB ATLAS
-        async function aplicarTemaEnServidor() {
-            if(!_preguntasGeneradas) return;
-
-            const nombre = document.getElementById('input-evento-nombre').value;
-            const subtitulo = document.getElementById('input-evento-subtitulo').value;
-            const url = document.getElementById('input-url-publica').value;
-
-            const btnAplicar = document.getElementById('btn-aplicar-tema');
-            btnAplicar.disabled = true;
-            mostrarEstado('Subiendo datos y sincronizando tu Cluster de MongoDB Atlas...', 'ok');
-
-            try {
-                const resp = await fetch('/admin/cambiar-tema', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        preguntas:       _preguntasGeneradas,
-                        evento_nombre:   nombre,
-                        evento_subtitulo: subtitulo,
-                        url_publica:     url
-                    })
-                });
-
-                const result = await resp.json();
-
-                if (result.ok) {
-                    mostrarEstado('🚀 ¡Excelente! Cuestionario inyectado en MongoDB y sincronizado con las pantallas.', 'ok');
-                    document.getElementById('url-actual-display').textContent = 'URL activa: ' + url;
-                    document.getElementById('header-titulo-evento').textContent = nombre;
-                    document.getElementById('header-subtitulo-evento').textContent = subtitulo;
-                    _preguntasGeneradas = null;
-                    document.getElementById('preview-preguntas').style.display = 'none';
-                } else {
-                    mostrarEstado('Error: ' + result.error, 'error');
-                    btnAplicar.disabled = false;
-                }
-            } catch (err) {
-                mostrarEstado('Error de red: ' + err.message, 'error');
-                btnAplicar.disabled = false;
-            }
-        }
-
-        async function cargarConfigActual() {
-            try {
-                const r = await fetch('/contenido.json');
-                const data = await r.json();
-                if(data) {
-                    document.getElementById('header-titulo-evento').textContent = data.evento.nombre || 'Gran Trivia';
-                    document.getElementById('header-subtitulo-evento').textContent = data.evento.subtitulo || 'Consola de Control';
-                    document.getElementById('input-evento-nombre').value = data.evento.nombre || '';
-                    document.getElementById('input-evento-subtitulo').value = data.evento.subtitulo || '';
-                    if(data.config) {
-                        document.getElementById('input-url-publica').value = data.config.url_publica || '';
-                        document.getElementById('url-actual-display').textContent = 'URL activa: ' + (data.config.url_publica || '—');
-                    }
-                }
-            } catch(e){}
-        }
-
-        function mostrarEstado(msg, tipo) {
-            const el = document.getElementById('estado-ia');
-            el.textContent = msg;
-            el.className = 'estado-ia ' + tipo;
-            el.style.display = 'block';
-        }
-    </script>
-</body>
-</html>
+        function obtenerHoraFormateada(jugador) {
+            if (jugador.hora) return jugador.hora; 
+            const d = new Date();
+            let hh = String(d.getHours()).padStart(2, '0');
+            let mm = String(d.getMinutes()).padStart(2, '0');
+            return
