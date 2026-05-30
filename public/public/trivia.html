@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Gran Trivia de Mayo 🇦🇷</title>
+    <!-- Librerías Externas Clave -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --celeste: #74b9ff;
+            --azul-oscuro: #0d2c54;
+            --amarillo-sol: #fbcb3b;
+            --blanco: #ffffff;
+            --gris-fondo: #f5f6fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle, var(--blanco) 0%, #e3f2fd 100%);
+            color: var(--azul-oscuro);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .pantalla-layout {
+            display: flex;
+            width: 100%;
+            max-width: 1350px;
+            gap: 30px;
+            align-items: flex-start;
+            margin-top: 10px;
+            flex: 1;
+        }
+
+        .bloque-qr-acceso {
+            flex: 1;
+            background: var(--blanco);
+            border: 4px solid var(--azul-oscuro);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0px 15px 35px rgba(13, 44, 84, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 520px;
+        }
+
+        .bloque-qr-acceso h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            color: var(--azul-oscuro);
+        }
+
+        #contenedor-qr {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid #ced4da;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            min-width: 260px;
+            min-height: 260px;
+        }
+
+        .bloque-qr-acceso p {
+            font-size: 1.2rem;
+            color: #57606f;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .contenedor-ranking {
+            flex: 2;
+            background: var(--blanco);
+            border: 4px solid var(--azul-oscuro);
+            border-radius: 24px;
+            box-shadow: 0px 20px 40px rgba(13, 44, 84, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 520px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--azul-oscuro);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 5px;
+        }
+
+        .sol-patrio {
+            font-size: 3rem;
+            animation: spin 20s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .fila-ranking {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: var(--gris-fondo);
+            border-radius: 12px;
+            border-left: 6px solid #ced4da;
+            font-size: 1.4rem;
+            font-weight: bold;
+            animation: entradaSutil 0.3s ease-in-out;
+        }
+
+        @keyframes entradaSutil {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fila-ranking.puesto-1 {
+            background: #fff9db;
+            border-left: 6px solid var(--amarillo-sol);
+            transform: scale(1.01);
+            font-size: 1.7rem;
+            padding: 14px 25px;
+            box-shadow: 0px 4px 12px rgba(251, 203, 59, 0.2);
+        }
+        .fila-ranking.puesto-2 {
+            background: #f1f2f6;
+            border-left: 6px solid #a4b0be;
+            font-size: 1.5rem;
+        }
+        .fila-ranking.puesto-3 {
+            background: #faf0e6;
+            border-left: 6px solid #cd7f32;
+            font-size: 1.45rem;
+        }
+
+        .izquierda-bloque {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .numero-puesto { min-width: 40px; text-align: center; }
+        .medalla { font-size: 1.8rem; }
+        .nombre-usuario { color: var(--azul-oscuro); }
+
+        .puntos-usuario {
+            color: #27ae60;
+            background: rgba(46, 204, 113, 0.1);
+            padding: 4px 14px;
+            border-radius: 30px;
+            text-align: right;
+            min-width: 130px;
+        }
+
+        .sin-jugadores {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.6rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .bloque-sabias-que {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .titulo-sabiasque {
+            font-size: 2.2rem;
+            color: var(--azul-oscuro);
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 4px solid var(--amarillo-sol);
+            padding-bottom: 8px;
+        }
+
+        .texto-pregunta {
+            font-size: 2.3rem;
+            color: var(--azul-oscuro);
+            font-weight: bold;
+            line-height: 1.3;
+            margin-bottom: 30px;
+        }
+
+        .texto-explicacion {
+            font-size: 1.6rem;
+            color: #57606f;
+            line-height: 1.6;
+            background: var(--gris-fondo);
+            padding: 25px;
+            border-radius: 16px;
+            border-left: 6px solid var(--celeste);
+            text-align: left;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px 0 5px 0;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .logo-tecnoincas {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, var(--amarillo-sol) 0deg 30deg, #d4a314 30deg 60deg);
+            border: 2px solid #555;
+            display: inline-block;
+            position: relative;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .logo-tecnoincas::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #95a5a6;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="sol-patrio">☀️</div>
+        <h1 id="titulo-principal">Gran Trivia de Mayo</h1>
+    </header>
+
+    <div class="pantalla-layout">
+        <!-- Bloque de Acceso Izquierdo -->
+        <div class="bloque-qr-acceso">
+            <h2 id="ldb-btn-sumate">¡Sumate a Jugar!</h2>
+            <div id="contenedor-qr"></div>
+            <p id="ldb-instruccion-qr">Escaneá el código QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷</p>
+        </div>
+
+        <!-- Contenedor del Ranking Derecho con ID corregido -->
+        <div class="contenedor-ranking" id="lista-leaderboard">
+            <div class="sin-jugadores">Esperando que se conecten los primeros patriotas... 🇦🇷</div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="logo-tecnoincas"></div>
+        <span id="footer-ldb">(R) Tecnoincas.com.ar</span>
+    </footer>
+
+    <!-- 🚀 MOTOR LOGICO INTEGRADO COMPLETO -->
+    <script>
+        // ── CARGAR CONTENIDO DESDE JSON ──
+        window._contenido = null;
+        fetch('/contenido.json')
+            .then(r => r.json())
+            .then(c => {
+                window._contenido = c;
+                const ldb = c.leaderboard;
+                document.getElementById('titulo-principal').textContent  = ldb.titulo_principal;
+                document.getElementById('ldb-btn-sumate').textContent    = ldb.btn_sumate;
+                document.getElementById('ldb-instruccion-qr').innerHTML  = ldb.instruccion_qr.replace(',', ',<br>');
+                document.title = c.evento.nombre + ' — Leaderboard';
+                document.getElementById('footer-ldb').textContent = c.evento.footer;
+                // Leer ciclos de curiosidades desde el JSON
+                if (ldb.ciclos_curiosidades) CICLOS_SABIAS_QUE = ldb.ciclos_curiosidades;
+            })
+            .catch(() => {});
+
+        // Cargar datos curiosos desde su propio JSON (generado a partir de preguntas.json)
+        fetch('/datos_curiosos.json')
+            .then(r => r.json())
+            .then(data => { window._datosCuriosos = data; })
+            .catch(() => { window._datosCuriosos = null; });
+
+        let socket;
+        let cacheJugadores = []; 
+        const urlTrivia = window.location.origin; 
+        
+        const USUARIOS_POR_PAGINA = 10;
+        let paginaActual = 0;
+        let indiceCurioso = 0;
+        let estadoActual = "ranking"; 
+        
+        let CICLOS_SABIAS_QUE = 4; // se sobreescribe desde contenido.json al cargar
+        let contadorCiclosSabiasQue = 0;
+
+        // Rastreador atómico: se ejecuta en bucle ultra-corto asegurando el engranaje
+        const iniciarRastreadorUI = setInterval(() => {
+            const contenedorLista = document.getElementById('lista-leaderboard');
+            const contenedorQR = document.getElementById("contenedor-qr");
+
+            if (contenedorLista && contenedorQR) {
+                console.log("¡Contenedores validados! Desplegando interfaz...");
+                clearInterval(iniciarRastreadorUI); 
+
+                // Forzamos el renderizado inicial en pantalla
+                dibujarPaginaRanking();
+
+                // Lanzamos el reloj maestro de 10 segundos
+                setInterval(ejecutarRotacion, 10000);
+
+                // Disparamos la carga asíncrona de utilidades
+                inicializarQrSeguro();
+                inicializarSocketsSeguros();
+            }
+        }, 100);
+
+        function inicializarQrSeguro() {
+            let intentosQR = 0;
+            const intervaloQR = setInterval(() => {
+                intentosQR++;
+                const contenedorQR = document.getElementById("contenedor-qr");
+                
+                if (typeof QRCode !== 'undefined' && contenedorQR) {
+                    try {
+                        new QRCode(contenedorQR, {
+                            text: urlTrivia,
+                            width: 260,
+                            height: 260,
+                            colorDark : "#0d2c54",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                        console.log("¡Código QR inyectado!");
+                        clearInterval(intervaloQR);
+                    } catch (err) {
+                        console.error("Fallo gráfico al crear QR:", err);
+                    }
+                } else if (intentosQR > 30) {
+                    clearInterval(intervaloQR);
+                }
+            }, 300);
+        }
+
+        function inicializarSocketsSeguros() {
+            let intentosSocket = 0;
+            const intervaloSocket = setInterval(() => {
+                intentosSocket++;
+                if (typeof io !== 'undefined') {
+                    try {
+                        socket = io();
+                        console.log("Enganchando canal de datos por Sockets...");
+
+                        socket.on('connect', () => {
+                            socket.emit('pedir_ranking_dashboard'); 
+                        });
+
+                        socket.on('update_ranking', (listaJugadores) => {
+                            cacheJugadores = listaJugadores;
+                            if (estadoActual === "ranking") {
+                                dibujarPaginaRanking();
+                            }
+                        });
+
+                        socket.on('data_ranking_dashboard', (listaJugadores) => {
+                            cacheJugadores = listaJugadores;
+                            if (estadoActual === "ranking") {
+                                dibujarPaginaRanking();
+                            }
+                        });
+
+                        clearInterval(intervaloSocket);
+                    } catch (err) {
+                        console.error("Fallo de conexión por socket:", err);
+                    }
+                } else if (intentosSocket > 30) {
+                    clearInterval(intervaloSocket);
+                }
+            }, 300);
+        }
+
+        function dibujarPaginaRanking() {
+            const contenedorLista = document.getElementById('lista-leaderboard');
+            if (!contenedorLista) return;
+
+            contenedorLista.innerHTML = ""; 
+
+            if (!cacheJugadores || cacheJugadores.length === 0) {
+                contenedorLista.innerHTML = `<div class="sin-jugadores">${(window._contenido && window._contenido.leaderboard.esperando_jugadores) || 'Esperando que se conecten los primeros patriotas... 🇦🇷'}</div>`;
+                return;
+            }
+
+            const inicio = paginaActual * USUARIOS_POR_PAGINA;
+            const fin = inicio + USUARIOS_POR_PAGINA;
+            const subLista = cacheJugadores.slice(inicio, fin);
+
+            subLista.forEach((jugador, subIndex) => {
+                const indexAbsoluto = inicio + subIndex; 
+                
+                let clasePuesto = "";
+                let medalla = "";
+                
+                if (indexAbsoluto === 0) { clasePuesto = "puesto-1"; medalla = "🥇 "; }
+                else if (indexAbsoluto === 1) { clasePuesto = "puesto-2"; medalla = "🥈 "; }
+                else if (indexAbsoluto === 2) { clasePuesto = "puesto-3"; medalla = "🥉 "; }
+
+                const fila = document.createElement('div');
+                fila.className = `fila-ranking ${clasePuesto}`;
+                fila.innerHTML = `
+                    <div class="izquierda-bloque">
+                        <span class="numero-puesto">${medalla}#${indexAbsoluto + 1}</span>
+                        <span class="nombre-usuario">@${jugador.username || 'anonimo'}</span>
+                    </div>
+                    <span class="puntos-usuario">${jugador.puntos || 0} pts</span>
+                `;
+                contenedorLista.appendChild(fila);
+            });
+        }
+
+        // Datos curiosos: se cargan desde datos_curiosos.json (generado desde preguntas.json)
+        // Si no cargó aún, mostrarDatoCuriosoUI() usa el fallback neutro
+        function getDatosCuriosos() {
+            return window._datosCuriosos || null;
+        }
+
+        function mostrarDatoCuriosoUI() {
+            const contenedorLista = document.getElementById('lista-leaderboard');
+            if (!contenedorLista) return;
+
+            const datos = getDatosCuriosos();
+            const tituloSQ = (window._contenido && window._contenido.leaderboard.sabiasque_titulo) || '💡 ¿Sabías que...?';
+            const sinDatos = (window._contenido && window._contenido.leaderboard.sin_jugadores) || 'Escaneá el QR para jugar 🇦🇷';
+
+            if (!datos || datos.length === 0) {
+                contenedorLista.innerHTML = `<div class="sin-jugadores">${sinDatos}</div>`;
+                return;
+            }
+
+            const datoActual = datos[indiceCurioso];
+            contenedorLista.innerHTML = `
+                <div class="bloque-sabias-que">
+                    <div class="titulo-sabiasque">${tituloSQ}</div>
+                    <div class="texto-pregunta">${datoActual.pregunta}</div>
+                    <div class="texto-explicacion">${datoActual.dato}</div>
+                </div>
+            `;
+            indiceCurioso = (indiceCurioso + 1) % datos.length;
+        }
+
+        function ejecutarRotacion() {
+            const tituloPrincipal = document.getElementById('titulo-principal');
+            const totalPaginas = Math.ceil(cacheJugadores.length / USUARIOS_POR_PAGINA) || 1;
+
+            if (estadoActual === "ranking") {
+                paginaActual++;
+
+                if (paginaActual < totalPaginas) {
+                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia de Mayo";
+                    if (tituloPrincipal) tituloPrincipal.innerText = `${tituloEvento} (${paginaActual + 1}/${totalPaginas})`;
+                    dibujarPaginaRanking();
+                } else {
+                    estadoActual = "sabiasque";
+                    contadorCiclosSabiasQue = 1;
+                    if (tituloPrincipal) tituloPrincipal.innerText = (window._contenido && window._contenido.leaderboard.titulo_dato_historico) || "Datos Curiosos 🧠";
+                    mostrarDatoCuriosoUI();
+                }
+            } else {
+                if (contadorCiclosSabiasQue < CICLOS_SABIAS_QUE) {
+                    contadorCiclosSabiasQue++;
+                    mostrarDatoCuriosoUI();
+                } else {
+                    estadoActual = "ranking";
+                    paginaActual = 0;
+                    const tituloEvento = (window._contenido && window._contenido.leaderboard.titulo_principal) || "Gran Trivia de Mayo";
+                    if (tituloPrincipal) tituloPrincipal.innerText = totalPaginas > 1 ? `${tituloEvento} (1/${totalPaginas})` : tituloEvento;
+                    dibujarPaginaRanking();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

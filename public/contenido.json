@@ -1,0 +1,63 @@
+{
+  "config": {
+    "url_publica": "https://trivia25demayo.onrender.com",
+    "mongo_db": "trivia_mayo_db",
+    "mongo_col": "ranking"
+  },
+  "evento": {
+    "nombre": "Gran Trivia de Mayo",
+    "edicion": "2025",
+    "emoji_principal": "☀️",
+    "emojis_header": "🇦🇷 🏛️ ☀️ 🇦🇷",
+    "subtitulo": "Revolución de Mayo",
+    "footer": "(R) Tecnoincas.com.ar",
+    "emoji_1": "🇦🇷",
+    "emoji_2": "🏛️",
+    "emoji_3": "☀️"
+  },
+  "login": {
+    "titulo": "¡Gran Trivia de Mayo!",
+    "subtitulo": "Ingresá tu usuario de Instagram para aparecer en la pantalla gigante",
+    "placeholder_input": "@tu_usuario",
+    "btn_ingresar": "INGRESAR",
+    "instrucciones_titulo": "¿Cómo jugar?",
+    "instrucciones_texto": "Respondé 10 preguntas lo más rápido posible. Si te equivocás, tenés una segunda chance. El tiempo también suma puntos... ¡Al final ves tu posición en el ranking del evento!"
+  },
+  "juego": {
+    "label_pregunta": "PREGUNTA",
+    "label_total": "10",
+    "label_puntos": "Pts",
+    "combo_texto": "🔥 COMBO x{n} 🔥",
+    "tiempo_agotado": "⏱️ ¡Tiempo agotado!",
+    "cargando": "Cargando pregunta..."
+  },
+  "resultados": {
+    "victoria_titulo": "¡Sos un gran ganador! 🏆",
+    "victoria_mensaje": "¡Felicitaciones! Completaste la ronda. Pero podés dar más, ¡volvé al juego con más energía y superá tus límites!",
+    "derrota_titulo": "¡Uh, casi! 💪",
+    "derrota_mensaje": "No pudimos completar el juego esta vez... ¡Volvé por una revancha!",
+    "label_puesto": "Puesto",
+    "label_puntaje": "Puntaje",
+    "btn_reiniciar": "🔄 Volver a Jugar"
+  },
+  "leaderboard": {
+    "titulo_principal": "Gran Trivia de Mayo",
+    "titulo_dato_historico": "Datos Curiosos 🧠",
+    "sabiasque_titulo": "💡 ¿Sabías que...?",
+    "btn_sumate": "¡Sumate a Jugar!",
+    "instruccion_qr": "Escaneá el código QR con tu celular, ingresá tu Instagram y participá en vivo 🇦🇷",
+    "sin_jugadores": "Escaneá el QR para jugar 🇦🇷",
+    "esperando_jugadores": "Escaneá el QR para jugar 🇦🇷",
+    "ciclos_curiosidades": 4
+  },
+  "dashboard": {
+    "titulo_login": "Acceso Consultoría",
+    "subtitulo_login": "Ingresá las credenciales del evento",
+    "placeholder_usuario": "Usuario Corporativo",
+    "placeholder_clave": "Contraseña",
+    "btn_ingresar": "INGRESAR AL PANEL",
+    "titulo_panel": "Dashboard de Auditoría",
+    "subtitulo_panel": "Estadísticas de participación y rendimiento en tiempo real",
+    "footer_reporte": "Reporte Oficial de Auditoría - (R) Tecnoincas.com.ar"
+  }
+}

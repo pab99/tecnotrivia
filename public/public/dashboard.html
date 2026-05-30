@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control & Analítica - Trivia de Mayo 🇦🇷</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --azul-oscuro: #0d2c54;
+            --celeste: #74b9ff;
+            --amarillo-sol: #fbcb3b;
+            --rojo-error: #ff7675;
+            --verde-exito: #2ecc71;
+            --gris-claro: #f5f6fa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #seccion-login {
+            margin: auto;
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            background: white;
+            border: 3px solid var(--azul-oscuro);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 10vh;
+        }
+
+        .input-login {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        #seccion-dashboard {
+            display: none;
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .header-dash {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--azul-oscuro);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .grid-paneles {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-paneles { grid-template-columns: 1fr; }
+        }
+
+        .tarjeta-control {
+            background: white;
+            border: 2px solid var(--azul-oscuro);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .tarjeta-control h3 {
+            color: var(--azul-oscuro);
+            margin-bottom: 15px;
+            border-left: 5px solid var(--celeste);
+            padding-left: 10px;
+        }
+
+        .btn-dash {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-pdf { background-color: #e74c3c; }
+        .btn-json { background-color: var(--azul-oscuro); }
+        .btn-reset { background-color: #7f8c8d; }
+        .btn-reset.peligo { background-color: var(--rojo-error); }
+
+        .grafico-linea {
+            background: var(--gris-claro);
+            height: 180px;
+            border-bottom: 2px solid #555;
+            border-left: 2px solid #555;
+            position: relative;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 0 5px;
+        }
+
+        .punto-curva {
+            width: 28px;
+            background: var(--celeste);
+            border-radius: 4px 4px 0 0;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--azul-oscuro);
+            font-weight: bold;
+            padding-top: 4px;
+            transition: height 0.5s ease;
+            min-height: 18px;
+        }
+
+        .eje-x-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.72rem;
+            color: #7f8c8d;
+            padding: 0 2px;
+        }
+
+        .barra-porcentaje-contenedor { margin: 15px 0; }
+        .barra-porcentaje-lbl { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
+        .barra-progreso { background: #dfe6e9; height: 18px; border-radius: 10px; overflow: hidden; }
+        .barra-progreso-llenado { height: 100%; background: var(--amarillo-sol); transition: width 0.5s ease; }
+
+        .tabla-auditoria {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .tabla-auditoria th {
+            background-color: var(--azul-oscuro);
+            color: white;
+            text-align: left;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .tabla-auditoria td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tabla-auditoria tr:nth-child(even) { background-color: var(--gris-claro); }
+        .tabla-auditoria .txt-puntos-tabla { font-weight: bold; color: var(--verde-exito); }
+        .txt-hora { color: #7f8c8d; font-family: monospace; font-size: 0.95rem; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: white;
+            border-top: 1px solid #ddd;
+            margin-top: auto;
+        }
+
+        .logo-tecnoincas {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, var(--amarillo-sol) 0deg 30deg, #d4a314 30deg 60deg);
+            border: 2px solid #555;
+            display: inline-block;
+            position: relative;
+        }
+
+        .btn-ia { background: linear-gradient(135deg, #6c3483, #a569bd); }
+        .btn-aplicar { background: #27ae60; }
+        .btn-aplicar:disabled { background: #95a5a6; cursor: not-allowed; }
+        .campo-tema {
+            width: 100%; padding: 10px 14px; margin: 8px 0;
+            border: 2px solid #ced4da; border-radius: 8px;
+            font-size: 0.95rem; font-family: inherit;
+        }
+        .preview-preguntas {
+            background: var(--gris-claro); border-radius: 10px;
+            padding: 14px; margin-top: 14px;
+            border-left: 4px solid #a569bd; display: none;
+        }
+        .preview-item {
+            background: white; border-radius: 6px; padding: 10px 12px;
+            margin-bottom: 8px; font-size: 0.85rem; border: 1px solid #e0d5f0;
+        }
+        .preview-item .pq { color: #333; font-weight: 600; }
+        .preview-item .pa { color: #27ae60; font-size: 0.82rem; }
+        .estado-ia {
+            padding: 10px 14px; border-radius: 8px; margin-top: 10px;
+            font-size: 0.88rem; font-weight: 600; display: none;
+        }
+        .estado-ia.generando { background: #fef9e7; color: #d68910; border: 1px solid #f9e79f; }
+        .estado-ia.ok { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+        .estado-ia.error { background: #fdedec; color: #c0392b; border: 1px solid #f5b7b1; }
+        .url-actual { font-size: 0.8rem; color: #7f8c8d; font-family: monospace; }
+        .separador-tema { border: none; border-top: 2px dashed #e0d5f0; margin: 16px 0; }
+        .btn-upload { background: linear-gradient(135deg, #1a6b3c, #27ae60); }
+        .upload-zona {
+            border: 2px dashed #27ae60; border-radius: 10px;
+            padding: 16px; text-align: center; margin-top: 12px;
+            background: #f0faf5; cursor: pointer; transition: background 0.2s;
+        }
+        .upload-zona:hover { background: #d5f5e3; }
+        .upload-zona.arrastrando { background: #a9dfbf; border-color: #1e8449; }
+        .upload-info { font-size: 0.82rem; color: #555; margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+    <div id="seccion-login">
+        <h2 id="dash-titulo-login" style="color: var(--azul-oscuro); margin-bottom: 10px;">Acceso Consultoría</h2>
+        <p id="dash-subtitulo-login" style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ingresá las credenciales del evento</p>
+        <input type="text" id="input-usuario" class="input-login" placeholder="Usuario Corporativo">
+        <input type="password" id="input-clave" class="input-login" placeholder="Contraseña">
+        <button id="dash-btn-ingresar" class="btn-dash btn-json" onclick="autenticar()" style="margin-top: 15px;">INGRESAR AL PANEL</button>
+    </div>
+
+    <div id="seccion-dashboard">
+        <div class="header-dash">
+            <div>
+                <h1 id="dash-titulo-panel">Dashboard de Auditoría</h1>
+                <p id="dash-subtitulo-panel" style="color: #7f8c8d;">Estadísticas de participación y rendimiento en tiempo real</p>
+            </div>
+            <div style="font-weight: bold; background: var(--gris-claro); padding: 10px 20px; border-radius: 8px; border: 1px solid #ddd;">
+                ⚙️ Conexión: <span style="color: var(--verde-exito);">Estable (JSON)</span>
+            </div>
+        </div>
+
+        <div class="grid-paneles">
+            <div>
+                <div class="tarjeta-control">
+                    <h3>Acciones Operativas</h3>
+                    <button class="btn-dash btn-pdf" onclick="window.print()">🖨️ Imprimir Reporte PDF</button>
+                    <button class="btn-dash btn-json" onclick="descargarBaseDatos()">💾 Descargar Base (.json)</button>
+                    <button id="btn-reset-sistema" class="btn-dash btn-reset" onclick="ejecutarResetCompleto()">🗑️ Limpiar Lista de Usuarios</button>
+                    <button class="btn-dash" style="background:#8e44ad;" onclick="descargarPreguntas()">📥 Descargar Preguntas Actuales (.json)</button>
+                </div>
+
+                <div class="tarjeta-control">
+                    <h3>Resumen General</h3>
+                    <div style="margin-top: 10px; font-size: 1.1rem; line-height: 1.8;">
+                        <div>• Total Participantes: <strong id="lbl-total-usr">0</strong></div>
+                        <div>• Récord Máximo Real: <strong id="lbl-max-puntos" style="color: var(--verde-exito);">0 pts</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="tarjeta-control">
+                    <h3>Curva de Ingreso Real de Usuarios (Por Hora)</h3>
+                    <div class="grafico-linea">
+                        <div id="curva-h10" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h11" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h12" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h13" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h14" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h15" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h16" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h17" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h18" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h19" class="punto-curva" style="height: 0%;">0</div>
+                        <div id="curva-h20" class="punto-curva" style="height: 0%;">0</div>
+                    </div>
+                    <div class="eje-x-labels">
+                        <span>10h</span><span>11h</span><span>12h</span><span>13h</span><span>14h</span><span>15h</span><span>16h</span><span>17h</span><span>18h</span><span>19h</span><span>20h</span>
+                    </div>
+                </div>
+
+                <div class="tarjeta-control">
+                    <h3>Distribución de Rendimiento (% de Aciertos)</h3>
+                    <div class="barra-porcentaje-contenedor">
+                        <div class="barra-porcentaje-lbl"><span>Completo (100% efectividad)</span><span id="lbl-pct-alto">0%</span></div>
+                        <div class="barra-progreso"><div id="barra-pct-alto" class="barra-progreso-llenado" style="width: 0%; background-color: var(--verde-exito);"></div></div>
+                    </div>
+                    <div class="barra-porcentaje-contenedor">
+                        <div class="barra-porcentaje-lbl"><span>Rendimiento Regular/Bajo (&lt; 100%)</span><span id="lbl-pct-bajo">0%</span></div>
+                        <div class="barra-progreso"><div id="barra-pct-bajo" class="barra-progreso-llenado" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tarjeta-control" style="width: 100%;">
+            <h3>Listado Oficial de Participantes (Ordenado por Ranking Real)</h3>
+            <table class="tabla-auditoria">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Puesto</th>
+                        <th style="width: 43%;">Usuario de Instagram</th>
+                        <th style="width: 20%; text-align: center;">Hora Participación</th>
+                        <th style="width: 25%; text-align: right;">Puntaje Máximo Histórico</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios-cuerpo">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999;">Esperando autenticación...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tarjeta-control" style="width: 100%; border-color: #a569bd; margin-top: 10px;">
+            <h3 style="border-left-color: #a569bd;">🤖 Configuración del Evento & IA</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Nombre del evento</label>
+                    <input id="cfg-nombre" class="campo-tema" placeholder="Ej: Gran Trivia del Mar 2026">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Subtítulo / Descripción corta</label>
+                    <input id="cfg-subtitulo" class="campo-tema" placeholder="Ej: Ballenas y Océanos">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 8px;">
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 1</label>
+                    <input id="cfg-emoji1" class="campo-tema" placeholder="🇦🇷" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 2</label>
+                    <input id="cfg-emoji2" class="campo-tema" placeholder="🏛️" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.82rem; font-weight:700; color:#555;">Emoji 3</label>
+                    <input id="cfg-emoji3" class="campo-tema" placeholder="☀️" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <label style="font-size:0.82rem; font-weight:700; color:#555;">URL pública del juego</label>
+                <input id="cfg-url" class="campo-tema" placeholder="[https://mi-trivia.onrender.com](https://mi-trivia.onrender.com)">
+                <div class="url-actual" id="url-actual-display">Cargando URL actual...</div>
+            </div>
+
+            <hr class="separador-tema">
+
+            <label style="font-size:0.82rem; font-weight:700; color:#555;">📂 Cargar preguntas desde archivo JSON local</label>
+            <div class="upload-zona" id="upload-zona" onclick="document.getElementById('input-json').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                <div style="font-size:1.8rem;">📁</div>
+                <div style="font-weight:700; color:#1a6b3c;">Hacé clic o arrastrá tu archivo .json aquí</div>
+                <div class="upload-info" id="upload-info">Formato esperado: array de preguntas con id, pregunta, correcta, incorrectas[]</div>
+            </div>
+            <input type="file" id="input-json" accept=".json" style="display:none" onchange="cargarJsonLocal(event)">
+
+            <button class="btn-dash btn-upload" id="btn-subir-json" onclick="subirJsonAMongo()" disabled style="margin-top: 12px;">
+                ☁️ Subir JSON a MongoDB y Aplicar
+            </button>
+
+            <hr class="separador-tema">
+
+            <label style="font-size:0.82rem; font-weight:700; color:#555;">Tema para las preguntas</label>
+            <input id="cfg-tema" class="campo-tema" placeholder="Ej: Historia de la robótica industrial">
+            
+            <button class="btn-dash btn-ia" onclick="generarConIA()" style="margin-top: 12px;">
+                ✨ Generar 50 preguntas con IA
+            </button>
+
+            <div class="estado-ia" id="estado-ia"></div>
+
+            <div class="preview-preguntas" id="preview-preguntas">
+                <h4>👁️ Vista previa — primeras 5 preguntas generadas</h4>
+                <div id="preview-lista"></div>
+                <p style="font-size:0.78rem; color:#888; margin-top:8px;">
+                    Se generaron <strong id="total-generadas">0</strong> preguntas. Revisá el extracto y confirmá los cambios.
+                </p>
+            </div>
+
+            <button class="btn-dash btn-aplicar" id="btn-aplicar-tema" onclick="aplicarTema()" style="margin-top: 12px;">
+                ✅ Confirmar y Aplicar al Evento
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="logo-tecnoincas"></div>
+        <span id="dash-footer">(R) Tecnoincas.com.ar</span>
+    </footer>
+
+    <script>
+        const USUARIO_VALIDO = "admin";
+        const CLAVE_VALIDA = "tecnoincas2026";
+        let socket;
+        let _preguntasGeneradas = null;
+
+        // Cargar datos estáticos iniciales
+        fetch('/contenido.json')
+            .then(r => r.json())
+            .then(c => {
+                document.getElementById('dash-footer').textContent = c.evento.footer || '(R) Tecnoincas.com.ar';
+            }).catch(() => {});
+
+        function autenticar() {
+            const usr = document.getElementById('input-usuario').value.trim();
+            const pass = document.getElementById('input-clave').value.trim();
+
+            if (usr === USUARIO_VALIDO && pass === CLAVE_VALIDA) {
+                document.getElementById('seccion-login').style.display = 'none';
+                document.getElementById('seccion-dashboard').style.display = 'block';
+                inicializarConexionReal();
+                cargarConfigActual();
+            } else {
+                alert('Credenciales incorrectas.');
+            }
+        }
+
+        function inicializarConexionReal() {
+            if (typeof io === 'undefined') return;
+            socket = io();
+            socket.emit('pedir_ranking_dashboard');
+
+            socket.on('data_ranking_dashboard', (listaJugadores) => {
+                const tbody = document.getElementById('tabla-usuarios-cuerpo');
+                tbody.innerHTML = "";
+                
+                if (!listaJugadores || listaJugadores.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Nadie participó todavía.</td></tr>`;
+                    return;
+                }
+
+                document.getElementById('lbl-total-usr').innerText = listaJugadores.length;
+                document.getElementById('lbl-max-puntos').innerText = (listaJugadores[0].puntos || 0) + " pts";
+
+                listaJugadores.forEach((jugador, index) => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td><strong>#${index + 1}</strong></td>
+                        <td>@${jugador.username}</td>
+                        <td class="txt-hora" style="text-align: center;">${jugador.hora || '12:00'} hs</td>
+                        <td class="txt-puntos-tabla" style="text-align: right;">${jugador.puntos || 0} pts</td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+                procesarAnaliticasReales(listaJugadores);
+            });
+        }
+
+        function procesarAnaliticasReales(jugadores) {
+            let curva = { h10: 0, h11: 0, h12: 0, h13: 0, h14: 0, h15: 0, h16: 0, h17: 0, h18: 0, h19: 0, h20: 0 };
+            let perfectos = 0;
+
+            jugadores.forEach(j => {
+                if (j.puntos >= 50) perfectos++;
+                let h = j.hora ? parseInt(j.hora.split(':')[0], 10) : 12;
+                if (h >= 10 && h <= 20) curva[`h${h}`]++;
+            });
+
+            let max = Math.max(...Object.values(curva), 1);
+            Object.keys(curva).forEach(h => {
+                let el = document.getElementById(`curva-${h}`);
+                if (el) {
+                    el.style.height = `${(curva[h] / max) * 100}%`;
+                    el.innerText = curva[h];
+                }
+            });
+
+            let pctAlto = Math.round((perfectos / (jugadores.length || 1)) * 100);
+            document.getElementById('lbl-pct-alto').innerText = `${pctAlto}%`;
+            document.getElementById('barra-pct-alto').style.width = `${pctAlto}%`;
+            document.getElementById('lbl-pct-bajo').innerText = `${100 - pctAlto}%`;
+            document.getElementById('barra-pct-bajo').style.width = `${100 - pctAlto}%`;
+        }
+
+        function cargarConfigActual() {
+            fetch('/contenido.json')
+                .then(r => r.json())
+                .then(c => {
+                    document.getElementById('cfg-nombre').value = c.evento.nombre || '';
+                    document.getElementById('cfg-subtitulo').value = c.evento.subtitulo || '';
+                document.getElementById('cfg-emoji1').value = c.evento.emoji_1 || '';
+                document.getElementById('cfg-emoji2').value = c.evento.emoji_2 || '';
+                document.getElementById('cfg-emoji3').value = c.evento.emoji_3 || '';
+                    document.getElementById('cfg-url').value = c.config.url_publica || '';
+                    document.getElementById('url-actual-display').textContent = 'URL actual: ' + (c.config.url_publica || '—');
+                });
+        }
+
+        // ── COMUNICACIÓN CON EL ENDPOINT PUENTE DEL SERVER (EVITA EL ERROR 404) ──
+        async function generarConIA() {
+            const tema = document.getElementById('cfg-tema').value.trim();
+            if (!tema) { mostrarEstado('Ingresá un tema primero.', 'error'); return; }
+
+            mostrarEstado('⏳ Procesando tema en el backend seguro... Aguardá unos segundos.', 'generando');
+            document.getElementById('preview-preguntas').style.display = 'none';
+            document.getElementById('btn-aplicar-tema').disabled = true;
+
+            try {
+                const response = await fetch('/admin/generar-ia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tema: tema })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.ok) throw new Error(data.error || 'Falla de respuesta');
+
+                _preguntasGeneradas = data.preguntas;
+                mostrarEstado(`✅ ¡${data.preguntas.length} preguntas generadas con éxito!`, 'ok');
+                
+                const lista = document.getElementById('preview-lista');
+                lista.innerHTML = '';
+                data.preguntas.slice(0, 5).forEach((p, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `<div class="pq">${i+1}. ${p.pregunta}</div><div class="pa">✓ ${p.correcta}</div>`;
+                    lista.appendChild(div);
+                });
+                document.getElementById('total-generadas').textContent = data.preguntas.length;
+                document.getElementById('preview-preguntas').style.display = 'block';
+                // btn-aplicar-tema siempre habilitado
+
+            } catch (err) {
+                mostrarEstado('❌ Error: ' + err.message, 'error');
+            }
+        }
+
+        async function aplicarTema() {
+            const nombre   = document.getElementById('cfg-nombre').value.trim();
+            const subtitulo= document.getElementById('cfg-subtitulo').value.trim();
+            const emoji1   = document.getElementById('cfg-emoji1').value.trim();
+            const emoji2   = document.getElementById('cfg-emoji2').value.trim();
+            const emoji3   = document.getElementById('cfg-emoji3').value.trim();
+            const url      = document.getElementById('cfg-url').value.trim();
+
+            if (!nombre || !url) {
+                mostrarEstado('❌ Completá el nombre del evento y la URL antes de aplicar.', 'error');
+                return;
+            }
+
+            // Si hay preguntas nuevas generadas por IA → usar cambiar-tema (actualiza preguntas + config)
+            if (_preguntasGeneradas) {
+                mostrarEstado('⏳ Guardando preguntas y configuración en MongoDB Atlas...', 'generando');
+                try {
+                    const resp = await fetch('/admin/cambiar-tema', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            preguntas: _preguntasGeneradas,
+                            evento_nombre: nombre,
+                            evento_subtitulo: subtitulo,
+                            emoji_1: emoji1,
+                            emoji_2: emoji2,
+                            emoji_3: emoji3,
+                            url_publica: url
+                        })
+                    });
+                    const r = await resp.json();
+                    if (r.ok) {
+                        mostrarEstado('🎉 ¡Preguntas y configuración sincronizadas en la Nube!', 'ok');
+                        _preguntasGeneradas = null;
+                        document.getElementById('preview-preguntas').style.display = 'none';
+                    } else { throw new Error(r.error); }
+                } catch (err) {
+                    mostrarEstado('❌ Error al aplicar: ' + err.message, 'error');
+                }
+            } else {
+                // Solo actualizar configuración (título, emojis, etc.) sin tocar preguntas
+                mostrarEstado('⏳ Actualizando configuración en MongoDB Atlas...', 'generando');
+                try {
+                    const resp = await fetch('/admin/actualizar-config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            evento_nombre: nombre,
+                            evento_subtitulo: subtitulo,
+                            emoji_1: emoji1,
+                            emoji_2: emoji2,
+                            emoji_3: emoji3,
+                            url_publica: url
+                        })
+                    });
+                    const r = await resp.json();
+                    if (r.ok) {
+                        mostrarEstado('✅ ' + r.mensaje, 'ok');
+                    } else { throw new Error(r.error); }
+                } catch (err) {
+                    mostrarEstado('❌ Error al actualizar: ' + err.message, 'error');
+                }
+            }
+        }
+
+        // ── CARGA DE JSON LOCAL ──────────────────────────────────────
+        let _preguntasDesdeArchivo = null;
+
+        function onDragOver(e) {
+            e.preventDefault();
+            document.getElementById('upload-zona').classList.add('arrastrando');
+        }
+        function onDragLeave(e) {
+            document.getElementById('upload-zona').classList.remove('arrastrando');
+        }
+        function onDrop(e) {
+            e.preventDefault();
+            document.getElementById('upload-zona').classList.remove('arrastrando');
+            const file = e.dataTransfer.files[0];
+            if (file) procesarArchivoJson(file);
+        }
+        function cargarJsonLocal(event) {
+            const file = event.target.files[0];
+            if (file) procesarArchivoJson(file);
+        }
+        function procesarArchivoJson(file) {
+            if (!file.name.endsWith('.json')) {
+                mostrarEstado('❌ El archivo debe ser .json', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error('El JSON debe ser un array de preguntas.');
+                    if (data.length < 5) throw new Error('Se necesitan al menos 5 preguntas.');
+                    // Validar estructura mínima
+                    const muestra = data[0];
+                    if (!muestra.pregunta || !muestra.correcta || !Array.isArray(muestra.incorrectas)) {
+                        throw new Error('Estructura inválida. Cada pregunta necesita: pregunta, correcta, incorrectas[]');
+                    }
+                    // Asignar ids si faltan
+                    data.forEach((p, i) => { if (!p.id) p.id = i + 1; });
+                    _preguntasDesdeArchivo = data;
+                    document.getElementById('upload-info').textContent = `✅ ${data.length} preguntas cargadas desde "${file.name}"`;
+                    document.getElementById('upload-zona').style.borderColor = '#1e8449';
+                    document.getElementById('btn-subir-json').disabled = false;
+                    mostrarEstado(`📂 Archivo listo: ${data.length} preguntas. Completá el nombre del evento y hacé clic en "Subir JSON a MongoDB".`, 'ok');
+                } catch (err) {
+                    mostrarEstado('❌ Error en el archivo: ' + err.message, 'error');
+                    _preguntasDesdeArchivo = null;
+                    document.getElementById('btn-subir-json').disabled = true;
+                }
+            };
+            reader.readAsText(file);
+        }
+        async function subirJsonAMongo() {
+            if (!_preguntasDesdeArchivo) return;
+            const nombre = document.getElementById('cfg-nombre').value.trim();
+            const subtitulo = document.getElementById('cfg-subtitulo').value.trim();
+            const url = document.getElementById('cfg-url').value.trim();
+            if (!nombre || !url) {
+                mostrarEstado('❌ Completá el nombre del evento y la URL pública antes de subir.', 'error');
+                return;
+            }
+            mostrarEstado('⏳ Subiendo preguntas a MongoDB Atlas...', 'generando');
+            document.getElementById('btn-subir-json').disabled = true;
+            try {
+                const resp = await fetch('/admin/cambiar-tema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        preguntas: _preguntasDesdeArchivo,
+                        evento_nombre: nombre,
+                        evento_subtitulo: subtitulo,
+                        emoji_1: document.getElementById('cfg-emoji1').value.trim(),
+                        emoji_2: document.getElementById('cfg-emoji2').value.trim(),
+                        emoji_3: document.getElementById('cfg-emoji3').value.trim(),
+                        url_publica: url
+                    })
+                });
+                const r = await resp.json();
+                if (r.ok) {
+                    mostrarEstado(`🎉 ¡${_preguntasDesdeArchivo.length} preguntas subidas y aplicadas en la Nube!`, 'ok');
+                    _preguntasDesdeArchivo = null;
+                    document.getElementById('upload-info').textContent = 'Formato esperado: array de preguntas con id, pregunta, correcta, incorrectas[]';
+                    document.getElementById('upload-zona').style.borderColor = '#27ae60';
+                    document.getElementById('input-json').value = '';
+                } else {
+                    throw new Error(r.error);
+                }
+            } catch (err) {
+                mostrarEstado('❌ Error al subir: ' + err.message, 'error');
+                document.getElementById('btn-subir-json').disabled = false;
+            }
+        }
+
+        function mostrarEstado(msg, tipo) {
+            const el = document.getElementById('estado-ia');
+            el.textContent = msg;
+            el.className = 'estado-ia ' + tipo;
+            el.style.display = 'block';
+        }
+
+        function descargarBaseDatos() { window.open('/ranking_persistente.json', '_blank'); }
+        async function descargarPreguntas() {
+            try {
+                const resp = await fetch('/preguntas_actuales.json');
+                if (!resp.ok) throw new Error('No se pudo obtener las preguntas');
+                const data = await resp.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'preguntas_backup_' + new Date().toISOString().slice(0,10) + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch(err) {
+                alert('Error al descargar: ' + err.message);
+            }
+        }
+        async function ejecutarResetCompleto() {
+            const confirmado = confirm('⚠️ ¿Seguro que querés borrar TODOS los usuarios del ranking?\nEsta acción no se puede deshacer.');
+            if (!confirmado) return;
+            const btn = document.getElementById('btn-reset-sistema');
+            btn.disabled = true;
+            btn.textContent = '⏳ Limpiando...';
+            try {
+                const resp = await fetch('/admin/reset-usuarios', { method: 'POST' });
+                const r = await resp.json();
+                if (r.ok) {
+                    alert('✅ ' + r.mensaje);
+                } else {
+                    throw new Error(r.error);
+                }
+            } catch (err) {
+                alert('❌ Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🗑️ Limpiar Lista de Usuarios';
+            }
+        }
+    </script>
+</body>
+</html>
