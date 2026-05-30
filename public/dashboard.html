@@ -269,6 +269,7 @@
                     <button class="btn-dash btn-json" onclick="descargarBaseDatos()">💾 Descargar Base (.json)</button>
                     <button id="btn-reset-sistema" class="btn-dash btn-reset" onclick="ejecutarResetCompleto()">🗑️ Limpiar Lista de Usuarios</button>
                     <button class="btn-dash" style="background:#8e44ad;" onclick="descargarPreguntas()">📥 Descargar Preguntas Actuales (.json)</button>
+                    <button class="btn-dash" style="background:#e67e22;" onclick="resetearConfig()">🔄 Resetear Config (borrar Mongo y usar local)</button>
                 </div>
 
                 <div class="tarjeta-control">
@@ -591,21 +592,17 @@
                 // Solo actualizar configuración (título, emojis, etc.) sin tocar preguntas
                 mostrarEstado('⏳ Actualizando configuración en MongoDB Atlas...', 'generando');
                 try {
+                    const payload = { evento_nombre: nombre, evento_subtitulo: subtitulo, emoji_1: emoji1, emoji_2: emoji2, emoji_3: emoji3, url_publica: url };
+                    console.log('📤 Enviando a /admin/actualizar-config:', payload);
                     const resp = await fetch('/admin/actualizar-config', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            evento_nombre: nombre,
-                            evento_subtitulo: subtitulo,
-                            emoji_1: emoji1,
-                            emoji_2: emoji2,
-                            emoji_3: emoji3,
-                            url_publica: url
-                        })
+                        body: JSON.stringify(payload)
                     });
                     const r = await resp.json();
+                    console.log('📥 Respuesta:', r);
                     if (r.ok) {
-                        mostrarEstado('✅ ' + r.mensaje, 'ok');
+                        mostrarEstado('✅ ' + r.mensaje + ' — Recargá index y trivia para ver los cambios.', 'ok');
                     } else { throw new Error(r.error); }
                 } catch (err) {
                     mostrarEstado('❌ Error al actualizar: ' + err.message, 'error');
@@ -713,6 +710,17 @@
         }
 
         function descargarBaseDatos() { window.open('/ranking_persistente.json', '_blank'); }
+        async function resetearConfig() {
+            if (!confirm('⚠️ Esto borra la config guardada en Mongo y vuelve al archivo local.\n¿Seguro?')) return;
+            try {
+                const resp = await fetch('/admin/reset-config', { method: 'POST' });
+                const r = await resp.json();
+                if (r.ok) {
+                    alert('✅ ' + r.mensaje);
+                    cargarConfigActual();
+                } else { throw new Error(r.error); }
+            } catch(err) { alert('❌ ' + err.message); }
+        }
         async function descargarPreguntas() {
             try {
                 const resp = await fetch('/preguntas_actuales.json');

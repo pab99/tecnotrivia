@@ -363,6 +363,24 @@ app.post('/admin/actualizar-config', async (req, res) => {
     }
 });
 
+// ── ENDPOINT ADMIN: Resetear config de Mongo (usa contenido.json local) ────────
+app.post('/admin/reset-config', async (req, res) => {
+    try {
+        // Recargar contenido.json local
+        const fs = require('fs');
+        const contenidoLocal = JSON.parse(fs.readFileSync(CONTENIDO_PATH, 'utf8'));
+        contenido = contenidoLocal;
+
+        if (dbConfig) {
+            await dbConfig.deleteOne({ tipo: 'contenido_actual' });
+            console.log('🗑️ Documento contenido_actual eliminado de Mongo');
+        }
+        res.json({ ok: true, mensaje: 'Config reseteada al archivo local. Ahora usá "Confirmar y Aplicar" para guardar la nueva config.' });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
 // ── ENDPOINT ADMIN: Limpiar todos los jugadores ─────────────────────────────
 app.post('/admin/reset-usuarios', async (req, res) => {
     try {
