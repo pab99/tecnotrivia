@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trivia</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
@@ -661,9 +659,10 @@ header {
             .then(r => r.json())
             .then(c => {
                 // Header
-                document.getElementById('hdr-sol').textContent       = c.evento.emoji_1 || c.evento.emoji_principal || '⭐';
-                document.getElementById('hdr-titulo').textContent    = c.evento.nombre;
-                document.getElementById('hdr-subtitulo').textContent = c.evento.subtitulo;
+                const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                _set('hdr-sol',      c.evento.emoji_1 || c.evento.emoji_principal || '⭐');
+                _set('hdr-titulo',   c.evento.nombre);
+                _set('hdr-subtitulo', c.evento.subtitulo);
                 document.title = c.evento.nombre + ' 🇦🇷';
 
                 // Login
@@ -671,9 +670,9 @@ header {
                 const e2 = c.evento.emoji_2 || '';
                 const e3 = c.evento.emoji_3 || '';
                 const headerEmojis = [e1, e2, e3].filter(Boolean).join(' ');
-                document.getElementById('login-emojis').textContent   = headerEmojis || c.evento.emojis_header || '';
-                document.getElementById('login-titulo').textContent    = c.login.titulo;
-                document.getElementById('login-subtitulo').textContent = c.login.subtitulo;
+                _set('login-emojis',    headerEmojis || c.evento.emojis_header || '');
+                _set('login-titulo',    c.login.titulo);
+                _set('login-subtitulo', c.login.subtitulo);
                 document.getElementById('username-display').placeholder = c.login.placeholder_input;
                 document.getElementById('inst-titulo').textContent     = c.login.instrucciones_titulo;
                 document.getElementById('inst-texto').textContent      = ' ' + c.login.instrucciones_texto;

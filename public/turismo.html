@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turismo Santiagueño</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css">
     <style>
         :root { --azul-oscuro:#0d2c54; --azul-medio:#1a4a7a; --amarillo:#fdd835; --blanco:#ffffff; --gris-claro:#f0f4f8; }
         * { box-sizing:border-box; margin:0; padding:0; }
@@ -50,6 +50,29 @@
         .btn-cerrar { display:block; width:100%; margin-top:8px; padding:12px; background:var(--azul-oscuro); color:var(--amarillo); font-family:'Nunito',sans-serif; font-weight:800; font-size:1rem; border:none; border-radius:12px; cursor:pointer; }
         footer { text-align:center; padding:20px; color:rgba(255,255,255,0.35); font-size:0.78rem; display:flex; align-items:center; justify-content:center; gap:10px; }
         footer img { height:28px; width:auto; opacity:0.5; filter:brightness(10); }
+
+        /* ─── BOTÓN VOLVER AL JUEGO ─── */
+        .btn-volver-juego {
+            display: block;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto 18px;
+            padding: 13px 20px;
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            font-size: 1rem;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: background 0.15s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(13,44,84,0.3);
+        }
+        .btn-volver-juego:hover { background: var(--azul-medio); transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -58,6 +81,11 @@
     <h1 id="hdr-titulo">Turismo Santiagueño</h1>
     <p class="subtitulo" id="hdr-subtitulo">Descubrí los tesoros del norte argentino</p>
 </header>
+
+<div style="text-align:center; padding: 20px 20px 0;">
+    <a class="btn-volver-juego" href="index.html">🎯 Volver al Juego</a>
+</div>
+
 <div class="lang-selector">
     <button class="lang-btn activo" data-lang="es" onclick="cambiarIdioma('es')" title="Español">🇪🇸</button>
     <button class="lang-btn" data-lang="en" onclick="cambiarIdioma('en')" title="English">🇬🇧</button>
@@ -68,6 +96,9 @@
 <div class="contenedor"><div class="grid" id="grid-lugares"></div></div>
 <div class="overlay" id="overlay" onclick="cerrarModal(event)">
     <div class="modal" id="modal-contenido"></div>
+</div>
+<div style="text-align:center; padding: 10px 20px 24px;">
+    <a class="btn-volver-juego" href="index.html">🎯 Volver al Juego</a>
 </div>
 <footer>
     <img src="images/logo_evento2.png" alt="Tecnoincas">
