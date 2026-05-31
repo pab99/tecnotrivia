@@ -1,9 +1,8 @@
-# Gran Trivia de Mayo 🇦🇷☀️
-
+# Gran Trivia 
 Proyecto rápido, simple y optimizado para ser desplegado en **Render** con soporte en tiempo real vía WebSockets (`Socket.io`). 
 
 ## Características
-- **50 Preguntas** históricas sobre la Revolución de Mayo sin repetirse por usuario (se sortean 10 por ronda).
+- **50 Preguntas** históricas configurables sin repetirse por usuario (se sortean 10 por ronda).
 - **Respuestas ordenadas al azar** en cada dispositivo para evitar copias entre vecinos.
 - **Teclado virtual integrado** adaptado a caracteres admitidos por Instagram.
 - **Sistema de puntajes dinámico**: Puntuación logarítmica según velocidad y multiplicadores por racha/combo (hasta x10).
