@@ -225,6 +225,41 @@ header {
         }
         .lang-btn:hover { opacity: 1; }
 
+
+        /* ─── BOTONES GUÍAS ─── */
+        .guias-wrapper {
+            margin-top: 18px;
+            text-align: center;
+        }
+        .guias-intro {
+            font-size: 0.78rem;
+            color: #78909c;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            padding: 0 8px;
+        }
+        .guias-btns {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-guia {
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.78rem;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.15s;
+        }
+        .btn-guia:hover { background: var(--azul-medio); }
+
         /* ─── INSTRUCCIONES ─── */
         .instrucciones {
             background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
@@ -532,8 +567,6 @@ header {
 
         <!-- ── PANTALLA LOGIN ── -->
         <div id="pantalla-login" class="pantalla activa tarjeta">
-            <div class="login-emojis" id="login-emojis">🎯 ⭐ 🎯</div>
-            <h2 class="login-titulo" id="login-titulo">¡Gran Trivia!</h2>
             <p class="login-subtitulo" id="login-subtitulo">Ingresá tu usuario de Instagram para aparecer en la pantalla gigante</p>
 
             <input type="text" id="username-display" class="input-ig" placeholder="@tu_usuario" readonly>
@@ -544,6 +577,16 @@ header {
                 💡 <strong id="inst-titulo">¿Cómo jugar?</strong>
                 <span id="inst-texto"> Respondé 10 preguntas lo más rápido posible. Si te equivocás, tenés una segunda chance. El tiempo también suma puntos... ¡Al final ves tu posición en el ranking del evento!</span>
             </div>
+
+            <div class="guias-wrapper" id="guias-login">
+                <p class="guias-intro" id="guias-texto">Como agradecimiento por tu tiempo jugando con nosotros, te regalamos estas guías. ¡Tocá para más info!</p>
+                <div class="guias-btns">
+                    <a class="btn-guia" href="recetario.html" target="_blank">🍽️ Gastronomía</a>
+                    <a class="btn-guia" href="turismo.html" target="_blank">🗺️ Turismo</a>
+                    <a class="btn-guia" href="musica.html" target="_blank">🎵 Cultura Musical</a>
+                </div>
+            </div>
+
         </div>
 
         <!-- ── PANTALLA JUEGO ── -->
@@ -590,6 +633,16 @@ header {
             <a id="btn-reiniciar" href="index.html" class="btn-reiniciar" onclick="playSound('click')">
                 🔄 Volver a Jugar
             </a>
+
+            <div class="guias-wrapper" style="margin-top:16px;">
+                <p class="guias-intro">Como agradecimiento por tu tiempo jugando con nosotros,<br>te regalamos estas guías:</p>
+                <div class="guias-btns">
+                    <a class="btn-guia" href="recetario.html" target="_blank">🍽️ Gastronomía</a>
+                    <a class="btn-guia" href="turismo.html" target="_blank">🗺️ Turismo</a>
+                    <a class="btn-guia" href="musica.html" target="_blank">🎵 Cultura Musical</a>
+                </div>
+            </div>
+
             <div id="fin-instagram" style="margin-top:14px; font-size:0.85rem; color:#555; text-align:center; display:none;">
                 📸 Seguinos en Instagram <strong id="fin-instagram-usuario"></strong>
             </div>
