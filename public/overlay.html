@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { background-color: #00FF00; margin: 0; overflow: hidden; height: 100vh; width: 100vw; font-family: sans-serif; }
+        .logo-top { position: absolute; top: 30px; right: 30px; width: 350px; }
+        .rotativo-container { position: absolute; bottom: 100px; right: 30px; text-align: center; width: 400px; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .qr-box img { width: 300px; height: 300px; }
+        .leyenda { font-weight: bold; margin-top: 20px; color: #000; font-size: 1.5em; }
+        .ig-footer { position: absolute; bottom: 20px; right: 30px; font-size: 1.6em; color: white; background: #000; padding: 15px 25px; border-radius: 15px; }
+    </style>
+</head>
+<body>
+    <img src="images/logo_evento2.png" class="logo-top" alt="Logo">
+    <div class="rotativo-container">
+        <div class="qr-box">
+            <img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=https://TU_URL_PUBLICA/menu.html">
+        </div>
+        <p id="leyenda-display" class="leyenda"></p>
+    </div>
+    <div class="ig-footer">Seguinos en IG: @casadesantiagocaba</div>
+
+<script>
+    const textos = ["¡Abrí este QR y Jugá!", "¡Ve nuestras mejores recetas!", "¡Disfrutá nuestra calidez!", "¡Escuchá nuestra música!", "¡Obtené nuestra lista de Spotify!"];
+    let index = 0;
+    function rotarTexto() {
+        document.getElementById('leyenda-display').innerText = textos[index];
+        index = (index + 1) % textos.length;
+    }
+    setInterval(rotarTexto, 15000);
+    rotarTexto();
+</script>
+</body>
+</html>
