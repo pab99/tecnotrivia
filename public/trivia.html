@@ -303,7 +303,7 @@
             <div class="bloque-qr-acceso">
                 <h2 id="ldb-btn-sumate">¡Sumate a Jugar!</h2>
                 <div id="contenedor-qr"></div>
-                <p id="ldb-instruccion-qr">Escaneá el código QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷</p>
+                <p id="ldb-instruccion-qr"></p>
             </div>
             <!-- Instagram: solo visible cuando hay datos curiosos (no ranking) -->
             <div id="trivia-instagram" style="display:none; text-align:center; padding: 12px 0 4px 0; line-height:1.2;">
@@ -340,7 +340,7 @@
                 const solEl = document.getElementById('trivia-sol');
                 if (solEl) solEl.textContent = (c.evento.emoji_1 || c.evento.emoji_principal || '⭐');
                 document.getElementById('ldb-btn-sumate').textContent    = ldb.btn_sumate;
-                document.getElementById('ldb-instruccion-qr').innerHTML  = ldb.instruccion_qr.replace(',', ',<br>');
+                // instruccion-qr se maneja por rotación multilenguaje
                 document.title = c.evento.nombre + ' — Leaderboard';
                 document.getElementById('footer-ldb').textContent = c.evento.footer;
                 if (c.evento && c.evento.instagram_usuario) {
@@ -557,6 +557,27 @@
                 }
             }
         }
+
+        // ── ROTACIÓN MULTILENGUAJE DEL BLOQUE QR ──────────────────
+        const _qrTextos = [
+            { titulo: '¡Sumate a Jugar!',      instruccion: 'Escaneá el QR con tu celular,<br>ingresá tu Instagram y participá en vivo 🇦🇷' },
+            { titulo: 'Join the Game!',         instruccion: 'Scan the QR code with your phone,<br>enter your Instagram and play live 🌎' },
+            { titulo: 'Rejoins le Jeu!',        instruccion: 'Scanne le QR avec ton téléphone,<br>entre ton Instagram et joue en direct 🌍' },
+            { titulo: 'Participe do Jogo!',     instruccion: 'Escaneie o QR com seu celular,<br>entre com seu Instagram e jogue ao vivo 🌎' },
+            { titulo: 'Mach mit!',              instruccion: 'Scanne den QR-Code mit deinem Handy,<br>gib deinen Instagram ein und spiel live 🌍' },
+        ];
+        let _qrIdx = 0;
+        function rotarTextoQR() {
+            const t = _qrTextos[_qrIdx % _qrTextos.length];
+            const elTitulo = document.getElementById('ldb-btn-sumate');
+            const elInstr  = document.getElementById('ldb-instruccion-qr');
+            if (elTitulo) elTitulo.textContent = t.titulo;
+            if (elInstr)  elInstr.innerHTML    = t.instruccion;
+            _qrIdx++;
+        }
+        rotarTextoQR(); // ejecutar inmediatamente
+        setInterval(rotarTextoQR, 2000);
+
     </script>
 </body>
 </html>
