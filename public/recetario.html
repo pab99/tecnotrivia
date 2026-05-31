@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recetario Santiagueño</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul-oscuro: #0d2c54;
+            --azul-medio: #1a4a7a;
+            --amarillo: #fdd835;
+            --celeste: #4fc3f7;
+            --blanco: #ffffff;
+            --gris-claro: #f0f4f8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(160deg, #0d2c54 0%, #1a4a7a 45%, #0d2c54 100%);
+            min-height: 100vh;
+            color: var(--azul-oscuro);
+        }
+        header {
+            text-align: center;
+            padding: 28px 20px 16px;
+        }
+        header img.logo-prov {
+            height: 110px;
+            width: auto;
+            display: block;
+            margin: 0 auto 10px;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        }
+        header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.8rem;
+            color: var(--amarillo);
+            letter-spacing: 3px;
+            line-height: 1;
+            text-shadow: 0 2px 12px rgba(253,216,53,0.3);
+        }
+        header p.subtitulo {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ── SELECTOR DE IDIOMAS ── */
+        .lang-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 0 20px;
+        }
+        .lang-btn {
+            font-size: 1.8rem;
+            background: none;
+            border: 2.5px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 5px 8px;
+            line-height: 1;
+            transition: all 0.15s;
+            opacity: 0.45;
+        }
+        .lang-btn.activo {
+            border-color: var(--amarillo);
+            opacity: 1;
+            background: rgba(253,216,53,0.15);
+            transform: scale(1.18);
+        }
+        .lang-btn:hover { opacity: 1; }
+
+        /* ── GRID DE RECETAS ── */
+        .contenedor {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+        .grid-recetas {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 22px;
+        }
+        .tarjeta {
+            background: var(--blanco);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .tarjeta:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 36px rgba(0,0,0,0.35);
+        }
+        .tarjeta .emoji {
+            font-size: 2.4rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .tarjeta h2 {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--azul-oscuro);
+            margin-bottom: 6px;
+        }
+        .tarjeta .descripcion {
+            font-size: 0.88rem;
+            color: #546e7a;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+        .tarjeta .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .tag {
+            background: #e3f2fd;
+            color: var(--azul-medio);
+            font-size: 0.73rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-ver {
+            display: inline-block;
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.82rem;
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: background 0.15s;
+        }
+        .btn-ver:hover { background: var(--azul-medio); }
+
+        /* ── MODAL ── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(13,44,84,0.82);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .overlay.activo { display: flex; }
+        .modal {
+            background: var(--blanco);
+            border-radius: 22px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 28px;
+            position: relative;
+        }
+        .modal .emoji-grande { font-size: 3rem; display: block; margin-bottom: 10px; }
+        .modal h2 { font-size: 1.6rem; font-weight: 900; color: var(--azul-oscuro); margin-bottom: 6px; }
+        .modal .origen { font-size: 0.82rem; color: #888; font-style: italic; margin-bottom: 16px; }
+        .modal h3 { font-size: 1rem; font-weight: 800; color: var(--azul-medio); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .modal ul { padding-left: 18px; }
+        .modal ul li { font-size: 0.92rem; color: #333; margin-bottom: 5px; line-height: 1.5; }
+        .modal ol { padding-left: 18px; }
+        .modal ol li { font-size: 0.92rem; color: #333; margin-bottom: 8px; line-height: 1.55; }
+        .btn-cerrar {
+            position: sticky;
+            bottom: 0;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--azul-oscuro);
+            color: var(--amarillo);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.35);
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        footer img { height: 28px; width: auto; opacity: 0.5; filter: brightness(10); }
+    </style>
+</head>
+<body>
+
+<header>
+    <img class="logo-prov" src="images/logo_evento.png" alt="Santiago del Estero">
+    <h1 id="hdr-titulo">Recetario Santiagueño</h1>
+    <p class="subtitulo" id="hdr-subtitulo">Sabores tradicionales del norte argentino</p>
+</header>
+
+<div class="lang-selector">
+    <button class="lang-btn activo" data-lang="es" onclick="cambiarIdioma('es')" title="Español">🇪🇸</button>
+    <button class="lang-btn" data-lang="en" onclick="cambiarIdioma('en')" title="English">🇬🇧</button>
+    <button class="lang-btn" data-lang="fr" onclick="cambiarIdioma('fr')" title="Français">🇫🇷</button>
+    <button class="lang-btn" data-lang="pt" onclick="cambiarIdioma('pt')" title="Português">🇧🇷</button>
+    <button class="lang-btn" data-lang="de" onclick="cambiarIdioma('de')" title="Deutsch">🇩🇪</button>
+</div>
+
+<div class="contenedor">
+    <div class="grid-recetas" id="grid-recetas"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="cerrarModal(event)">
+    <div class="modal" id="modal-contenido"></div>
+</div>
+
+<footer>
+    <img src="images/logo_evento2.png" alt="Tecnoincas">
+    <span>(R) Tecnoincas.com.ar</span>
+</footer>
+
+<script>
+const _ui = {
+    es: { titulo: 'Recetario Santiagueño', subtitulo: 'Sabores tradicionales del norte argentino', ver: 'Ver Receta', cerrar: 'Cerrar', ingredientes: 'Ingredientes', preparacion: 'Preparación' },
+    en: { titulo: 'Santiago del Estero Cookbook', subtitulo: 'Traditional flavors of northern Argentina', ver: 'View Recipe', cerrar: 'Close', ingredientes: 'Ingredients', preparacion: 'Preparation' },
+    fr: { titulo: 'Livre de Recettes Santiaguines', subtitulo: 'Saveurs traditionnelles du nord argentin', ver: 'Voir la Recette', cerrar: 'Fermer', ingredientes: 'Ingrédients', preparacion: 'Préparation' },
+    pt: { titulo: 'Livro de Receitas Santiaguinas', subtitulo: 'Sabores tradicionais do norte argentino', ver: 'Ver Receita', cerrar: 'Fechar', ingredientes: 'Ingredientes', preparacion: 'Preparo' },
+    de: { titulo: 'Santiaguinisches Kochbuch', subtitulo: 'Traditionelle Aromen Nordargentiniens', ver: 'Rezept ansehen', cerrar: 'Schließen', ingredientes: 'Zutaten', preparacion: 'Zubereitung' }
+};
+
+const _recetas = {
+    es: [
+        { emoji: '🫕', nombre: 'Locro Santiagueño', descripcion: 'Guiso espeso de maíz, porotos y carnes que reconforta en los días fríos.', tags: ['guiso', 'invierno', 'maíz'], origen: 'Plato emblema del noroeste argentino, de origen prehispánico.',
+          ingredientes: ['500g maíz blanco pisado', '300g porotos', '300g mondongo', '300g carne de cerdo', '200g chorizo colorado', '1 cebolla grande', '2 cebollas de verdeo', '1 cdta pimentón', 'sal y comino a gusto'],
+          preparacion: ['Remojar maíz y porotos la noche anterior.', 'Hervir el maíz durante 2 horas a fuego lento.', 'Agregar los porotos y seguir cocinando 30 min.', 'Incorporar todas las carnes cortadas en cubos.', 'Preparar sofrito con cebolla, pimentón y comino, agregar al guiso.', 'Cocinar a fuego bajo 1 hora más hasta que espese.', 'Servir con cebolla de verdeo picada y ají picante.'] },
+        { emoji: '🥟', nombre: 'Empanadas Santiagueñas', descripcion: 'Rellenas de carne cortada a cuchillo, papa, huevo y especias. Se distinguen por su repulgue.', tags: ['horneadas', 'carne', 'tradicional'], origen: 'Cada familia santiagueña tiene su propia receta secreta.',
+          ingredientes: ['500g harina', '100g grasa de cerdo', '1 cdta sal', 'agua tibia c/n', '400g carne picada a cuchillo', '2 papas medianas', '2 huevos duros', '2 cebollas', '1 cdta comino', '1 cdta pimentón dulce', 'ají molido a gusto'],
+          preparacion: ['Hacer la masa uniendo harina, grasa y sal. Agregar agua hasta obtener masa tibia y lisa. Dejar reposar 30 min.', 'Para el relleno: saltear cebolla, agregar carne y cocinar. Incorporar papa hervida en cubos, especias y huevo picado. Enfriar.', 'Estirar la masa, cortar discos de 12cm.', 'Rellenar y cerrar con el repulgue característico (14 pliegues).', 'Hornear a 220°C por 15-18 minutos hasta dorar.'] },
+        { emoji: '🍖', nombre: 'Chivo al Asador', descripcion: 'Chivo entero asado a la cruz a las brasas durante horas, piel crocante y carne jugosa.', tags: ['asado', 'chivo', 'parrilla'], origen: 'Tradición gaucha de la región, infaltable en festividades.',
+          ingredientes: ['1 chivo entero (8-10kg)', 'sal gruesa', 'ajo', 'limón', 'chimichurri: perejil, ajo, orégano, vinagre, aceite'],
+          preparacion: ['Limpiar el chivo y abrirlo en mariposa.', 'Frotar con sal gruesa, ajo machacado y jugo de limón.', 'Clavar en el asador cruzado.', 'Cocinar a fuego lento de brasas (no llama) durante 3-4 horas.', 'Girar ocasionalmente para cocción pareja.', 'Servir con chimichurri y ensalada criolla.'] },
+        { emoji: '🌽', nombre: 'Humita en Chala', descripcion: 'Pasta de maíz fresco con queso y especias, envuelta en las propias hojas del choclo y hervida.', tags: ['maíz', 'vegetal', 'hervido'], origen: 'Receta de origen quechua, presente en toda la región andina.',
+          ingredientes: ['8 choclos frescos con sus chalas', '200g queso criollo rallado', '2 cebollas', '1 cda manteca', '1 cdta pimentón', 'sal y azúcar a gusto', 'albahaca fresca'],
+          preparacion: ['Separar las chalas con cuidado y reservar.', 'Rallar los granos de choclo finamente.', 'Rehogar cebolla en manteca hasta transparente.', 'Mezclar choclo rallado, cebolla, queso, pimentón y albahaca.', 'Poner 2 cdas de mezcla en cada chala, cerrar como paquetito.', 'Atar con tiras de chala y hervir en agua salada 30 minutos.'] },
+        { emoji: '🍲', nombre: 'Carbonada Criolla', descripcion: 'Guiso de carne con verduras, frutas de estación y arroz. Dulce y salado en armonía perfecta.', tags: ['guiso', 'frutas', 'criollo'], origen: 'Plato mestizo que combina influencias indígenas y españolas.',
+          ingredientes: ['500g carne de ternera en cubos', '2 choclos en rodajas', '2 papas', '2 batatas', '2 duraznos', '1 taza de arroz', '1 cebolla', '2 tomates', '1 caldo de carne', 'sal, pimienta, orégano'],
+          preparacion: ['Sellar la carne en aceite caliente. Retirar.', 'En la misma olla, rehogar cebolla y tomate.', 'Agregar caldo, carne y verduras duras.', 'Cocinar 20 minutos, agregar arroz y frutas.', 'Cocinar 15 minutos más hasta que todo esté tierno.', 'Rectificar sazón y servir bien caliente.'] },
+        { emoji: '🧆', nombre: 'Tamales Norteños', descripcion: 'Masa de maíz rellena con carne picante, envuelta en chala y hervida. Sabor intenso y tradicional.', tags: ['maíz', 'carne', 'hervido'], origen: 'De tradición prehispánica, adoptado por la cultura criolla.',
+          ingredientes: ['500g harina de maíz precocida', '200g grasa de cerdo', 'caldo c/n', '400g carne de cerdo picada', '2 cebollas', 'ají rojo, comino, pimentón', 'chalas de choclo para envolver'],
+          preparacion: ['Hidratar las chalas en agua caliente.', 'Mezclar harina de maíz con grasa y caldo hasta masa moldeable.', 'Para el relleno: sofrito de cebolla, carne, ají y especias.', 'Extender masa sobre chala, poner relleno al centro, cerrar.', 'Atar con tiras y hervir 1 hora a fuego suave.', 'Servir calientes, abrir en la mesa.'] },
+        { emoji: '🥘', nombre: 'Chanfaina Santiagueña', descripcion: 'Guiso de menudencias de cabrito con papas y especias. Plato de campo intenso y reconfortante.', tags: ['menudencias', 'cabrito', 'guiso'], origen: 'Tradición rural, se prepara al momento de faenar el animal.',
+          ingredientes: ['1kg menudencias de cabrito (hígado, riñones, corazón)', '4 papas', '2 cebollas', '3 dientes de ajo', 'pimentón, comino, orégano', 'vino blanco', 'aceite, sal'],
+          preparacion: ['Limpiar y cortar las menudencias en trozos pequeños.', 'Rehogar ajo y cebolla en aceite caliente.', 'Incorporar las menudencias y sellar a fuego fuerte.', 'Agregar las papas en cubos y el vino.', 'Condimentar y cocinar tapado 30 minutos.', 'Destapar y reducir la salsa. Servir con pan casero.'] },
+        { emoji: '🍮', nombre: 'Arrope de Tuna', descripcion: 'Dulce espeso elaborado con el fruto del cactus, de color rojo intenso y sabor único del monte.', tags: ['dulce', 'tuna', 'postre'], origen: 'Herencia de los pueblos originarios de la región chaco-santiagueña.',
+          ingredientes: ['3kg tunas maduras peladas', '500g azúcar', '1 limón (jugo)', 'cáscara de naranja opcional'],
+          preparacion: ['Lavar y pelar las tunas con cuidado (tienen espinas finas).', 'Licuar o pisarlas hasta obtener jugo.', 'Colar para quitar semillas.', 'Cocinar el jugo con azúcar a fuego lento.', 'Revolver constantemente durante 1-2 horas hasta espesar.', 'Agregar jugo de limón al final. Envasar caliente.'] },
+        { emoji: '🍞', nombre: 'Tortilla de Rescoldo', descripcion: 'Pan rustique cocido directamente en las brasas y cenizas calientes. Costra crocante, interior tierno.', tags: ['pan', 'brasas', 'campo'], origen: 'Pan de los arrieros y gauchos santiagueños en los campamentos.',
+          ingredientes: ['500g harina 0000', '1 cdta sal', '1 cdta levadura seca', '1 cda grasa', 'agua tibia c/n'],
+          preparacion: ['Mezclar harina, sal y levadura. Incorporar grasa.', 'Agregar agua tibia de a poco hasta masa blanda.', 'Dejar leudar 30 minutos tapado.', 'Dar forma de disco grueso (4cm de altura).', 'Hacer brasas y cubrirlas con ceniza caliente.', 'Enterrar la tortilla en la ceniza 20 minutos por lado.', 'Golpear para quitar ceniza y servir.'] },
+        { emoji: '🍵', nombre: 'Api Morado', descripcion: 'Bebida caliente espesa de maíz morado, canela y naranja. Nutritiva y aromática, ideal para el frío.', tags: ['bebida', 'maíz', 'caliente'], origen: 'Bebida andina compartida con Bolivia y el norte argentino.',
+          ingredientes: ['200g maíz morado seco', '2 litros agua', '2 ramas canela', '4 clavos de olor', 'cáscara de naranja', 'azúcar a gusto', 'jugo de limón'],
+          preparacion: ['Hervir el maíz morado con canela, clavos y cáscara de naranja 1 hora.', 'Colar y volver el líquido al fuego.', 'Agregar azúcar a gusto.', 'Disolver 2 cdas de fécula en agua fría y agregar revolviendo.', 'Cocinar hasta espesar levemente.', 'Servir caliente con unas gotas de limón.'] }
+    ],
+    en: [
+        { emoji: '🫕', nombre: 'Santiagueño Locro', descripcion: 'Thick corn, bean and meat stew that warms you on cold days.', tags: ['stew', 'winter', 'corn'], origen: 'Emblematic dish of northwest Argentina, of pre-Hispanic origin.',
+          ingredientes: ['500g crushed white corn', '300g beans', '300g tripe', '300g pork', '200g chorizo', '1 large onion', '2 spring onions', '1 tsp paprika', 'salt and cumin to taste'],
+          preparacion: ['Soak corn and beans overnight.', 'Boil corn for 2 hours on low heat.', 'Add beans and cook 30 more minutes.', 'Add all meats cut into cubes.', 'Make a sofrito with onion, paprika and cumin, add to stew.', 'Cook on low heat 1 more hour until thick.', 'Serve with chopped spring onion and hot pepper.'] },
+        { emoji: '🥟', nombre: 'Santiagueño Empanadas', descripcion: 'Filled with knife-cut beef, potato, egg and spices. Recognized by their distinctive fold.', tags: ['baked', 'beef', 'traditional'], origen: 'Every Santiago family has its own secret recipe.',
+          ingredientes: ['500g flour', '100g lard', '1 tsp salt', 'warm water as needed', '400g hand-chopped beef', '2 medium potatoes', '2 hard boiled eggs', '2 onions', '1 tsp cumin', '1 tsp sweet paprika', 'chili to taste'],
+          preparacion: ['Make the dough combining flour, lard and salt. Add warm water to get a smooth dough. Rest 30 min.', 'For filling: sauté onion, add beef and cook. Add diced boiled potato, spices and chopped egg. Cool.', 'Roll out dough, cut 12cm rounds.', 'Fill and seal with the characteristic fold (14 pleats).', 'Bake at 220°C for 15-18 minutes until golden.'] },
+        { emoji: '🍖', nombre: 'Goat on a Spit', descripcion: 'Whole goat roasted on a cross over coals for hours — crispy skin, juicy meat.', tags: ['roast', 'goat', 'grill'], origen: 'Gaucho tradition of the region, essential at celebrations.',
+          ingredientes: ['1 whole goat (8-10kg)', 'coarse salt', 'garlic', 'lemon', 'chimichurri: parsley, garlic, oregano, vinegar, oil'],
+          preparacion: ['Clean the goat and butterfly it open.', 'Rub with coarse salt, crushed garlic and lemon juice.', 'Mount on the crossed spit.', 'Cook over slow coal embers (no flame) for 3-4 hours.', 'Rotate occasionally for even cooking.', 'Serve with chimichurri and criolla salad.'] },
+        { emoji: '🌽', nombre: 'Humita en Chala', descripcion: 'Fresh corn paste with cheese and spices, wrapped in corn husks and boiled.', tags: ['corn', 'vegetarian', 'boiled'], origen: 'Recipe of Quechua origin, present throughout the Andean region.',
+          ingredientes: ['8 fresh corn cobs with husks', '200g grated fresh cheese', '2 onions', '1 tbsp butter', '1 tsp paprika', 'salt and sugar to taste', 'fresh basil'],
+          preparacion: ['Carefully remove husks and set aside.', 'Finely grate the corn kernels.', 'Sauté onion in butter until translucent.', 'Mix grated corn, onion, cheese, paprika and basil.', 'Place 2 tbsp of mixture on each husk, close like a parcel.', 'Tie with husk strips and boil in salted water for 30 minutes.'] },
+        { emoji: '🍲', nombre: 'Criolla Carbonada', descripcion: 'Beef stew with vegetables, seasonal fruits and rice. Sweet and savory in perfect harmony.', tags: ['stew', 'fruits', 'criollo'], origen: 'Mestizo dish combining indigenous and Spanish influences.',
+          ingredientes: ['500g beef in cubes', '2 corn cobs in rounds', '2 potatoes', '2 sweet potatoes', '2 peaches', '1 cup rice', '1 onion', '2 tomatoes', '1 beef stock', 'salt, pepper, oregano'],
+          preparacion: ['Sear beef in hot oil. Remove.', 'In the same pot, sauté onion and tomato.', 'Add stock, beef and hard vegetables.', 'Cook 20 minutes, add rice and fruits.', 'Cook 15 more minutes until everything is tender.', 'Adjust seasoning and serve very hot.'] },
+        { emoji: '🧆', nombre: 'Northern Tamales', descripcion: 'Corn dough filled with spiced meat, wrapped in corn husks and boiled. Intense traditional flavor.', tags: ['corn', 'meat', 'boiled'], origen: 'Pre-Hispanic tradition adopted by criollo culture.',
+          ingredientes: ['500g pre-cooked cornmeal', '200g lard', 'broth as needed', '400g minced pork', '2 onions', 'red chili, cumin, paprika', 'corn husks for wrapping'],
+          preparacion: ['Soak corn husks in hot water.', 'Mix cornmeal with lard and broth until moldable dough.', 'For filling: sauté onion, meat, chili and spices.', 'Spread dough on husk, place filling in center, close.', 'Tie with strips and boil 1 hour on low heat.', 'Serve hot, open at the table.'] },
+        { emoji: '🥘', nombre: 'Santiagueño Chanfaina', descripcion: 'Kid goat offal stew with potatoes and spices. An intense and comforting country dish.', tags: ['offal', 'kid', 'stew'], origen: 'Rural tradition, prepared at the time of slaughter.',
+          ingredientes: ['1kg kid offal (liver, kidneys, heart)', '4 potatoes', '2 onions', '3 garlic cloves', 'paprika, cumin, oregano', 'white wine', 'oil, salt'],
+          preparacion: ['Clean and cut offal into small pieces.', 'Sauté garlic and onion in hot oil.', 'Add offal and sear on high heat.', 'Add diced potatoes and wine.', 'Season and cook covered 30 minutes.', 'Uncover and reduce sauce. Serve with homemade bread.'] },
+        { emoji: '🍮', nombre: 'Cactus Fruit Arrope', descripcion: 'Thick sweet made from cactus pear, deep red color and unique flavor from the scrubland.', tags: ['sweet', 'cactus pear', 'dessert'], origen: 'Heritage of the indigenous peoples of the Santiago-Chaco region.',
+          ingredientes: ['3kg ripe peeled cactus pears', '500g sugar', '1 lemon (juice)', 'optional orange peel'],
+          preparacion: ['Wash and peel cactus pears carefully (they have fine thorns).', 'Blend or crush until juice obtained.', 'Strain to remove seeds.', 'Cook juice with sugar on low heat.', 'Stir constantly for 1-2 hours until thick.', 'Add lemon juice at end. Bottle hot.'] },
+        { emoji: '🍞', nombre: 'Ember Bread', descripcion: 'Rustic bread cooked directly in hot embers and ash. Crispy crust, tender inside.', tags: ['bread', 'embers', 'country'], origen: 'Bread of muleteers and gauchos in their camps.',
+          ingredientes: ['500g flour', '1 tsp salt', '1 tsp dry yeast', '1 tbsp lard', 'warm water as needed'],
+          preparacion: ['Mix flour, salt and yeast. Add lard.', 'Add warm water little by little until soft dough.', 'Let rise 30 minutes covered.', 'Shape into thick disc (4cm height).', 'Make embers and cover with hot ash.', 'Bury the bread in ash for 20 minutes per side.', 'Knock off ash and serve.'] },
+        { emoji: '🍵', nombre: 'Purple Corn Api', descripcion: 'Thick hot drink made from purple corn, cinnamon and orange. Nutritious and aromatic, ideal for cold days.', tags: ['drink', 'corn', 'hot'], origen: 'Andean beverage shared with Bolivia and northern Argentina.',
+          ingredientes: ['200g dry purple corn', '2 liters water', '2 cinnamon sticks', '4 cloves', 'orange peel', 'sugar to taste', 'lemon juice'],
+          preparacion: ['Boil purple corn with cinnamon, cloves and orange peel for 1 hour.', 'Strain and return liquid to heat.', 'Add sugar to taste.', 'Dissolve 2 tbsp cornstarch in cold water and add stirring.', 'Cook until slightly thickened.', 'Serve hot with a few drops of lemon.'] }
+    ],
+    fr: [
+        { emoji: '🫕', nombre: 'Locro Santiaguino', descripcion: 'Ragoût épais de maïs, haricots et viandes qui réchauffe les jours froids.', tags: ['ragoût', 'hiver', 'maïs'], origen: 'Plat emblème du nord-ouest argentin, d\'origine préhispanique.',
+          ingredientes: ['500g maïs blanc concassé', '300g haricots secs', '300g gras-double', '300g porc', '200g chorizo', '1 grand oignon', '2 oignons verts', '1 cc paprika', 'sel et cumin au goût'],
+          preparacion: ['Faire tremper maïs et haricots la veille.', 'Faire bouillir le maïs 2 heures à feu doux.', 'Ajouter les haricots et cuire 30 min de plus.', 'Incorporer toutes les viandes en dés.', 'Préparer un sofrito oignon-paprika-cumin, ajouter au ragoût.', 'Cuire à feu doux 1 heure jusqu\'à épaississement.', 'Servir avec oignon vert haché et piment.'] },
+        { emoji: '🥟', nombre: 'Empanadas Santiaguines', descripcion: 'Farcies de bœuf haché au couteau, pommes de terre, œuf et épices. Reconnaissables à leur bord plissé.', tags: ['four', 'bœuf', 'traditionnel'], origen: 'Chaque famille santiaguine a sa recette secrète.',
+          ingredientes: ['500g farine', '100g saindoux', '1 cc sel', 'eau tiède qsp', '400g bœuf haché au couteau', '2 pommes de terre', '2 œufs durs', '2 oignons', '1 cc cumin', '1 cc paprika doux', 'piment au goût'],
+          preparacion: ['Faire la pâte en mélangeant farine, saindoux et sel. Ajouter eau tiède jusqu\'à pâte lisse. Reposer 30 min.', 'Farce : faire revenir l\'oignon, ajouter la viande. Incorporer pommes de terre cuites en dés, épices et œuf haché. Refroidir.', 'Étaler la pâte, couper des disques de 12cm.', 'Garnir et fermer avec le plissé caractéristique (14 plis).', 'Cuire à 220°C pendant 15-18 minutes jusqu\'à dorure.'] },
+        { emoji: '🍖', nombre: 'Chevreau à la Broche', descripcion: 'Chevreau entier rôti à la croix sur les braises pendant des heures — peau croustillante, chair juteuse.', tags: ['rôti', 'chevreau', 'grill'], origen: 'Tradition gaucha de la région, incontournable lors des fêtes.',
+          ingredientes: ['1 chevreau entier (8-10kg)', 'gros sel', 'ail', 'citron', 'chimichurri : persil, ail, origan, vinaigre, huile'],
+          preparacion: ['Nettoyer le chevreau et l\'ouvrir en papillon.', 'Frotter avec gros sel, ail écrasé et citron.', 'Embrocher en croix.', 'Cuire à feu de braises lentes (sans flamme) 3-4 heures.', 'Tourner régulièrement pour cuisson uniforme.', 'Servir avec chimichurri et salade criolla.'] },
+        { emoji: '🌽', nombre: 'Humita en Chala', descripcion: 'Pâte de maïs frais au fromage et épices, enveloppée dans les feuilles du maïs et bouillie.', tags: ['maïs', 'végétarien', 'bouilli'], origen: 'Recette d\'origine quechua, présente dans toute la région andine.',
+          ingredientes: ['8 épis de maïs frais avec feuilles', '200g fromage frais râpé', '2 oignons', '1 cs beurre', '1 cc paprika', 'sel et sucre au goût', 'basilic frais'],
+          preparacion: ['Retirer soigneusement les feuilles et réserver.', 'Râper finement les grains de maïs.', 'Faire revenir l\'oignon dans le beurre.', 'Mélanger maïs, oignon, fromage, paprika et basilic.', 'Mettre 2 cs de mélange sur chaque feuille, fermer en paquet.', 'Attacher avec des lanières de feuilles et bouillir dans eau salée 30 minutes.'] },
+        { emoji: '🍲', nombre: 'Carbonada Criolla', descripcion: 'Ragoût de bœuf avec légumes, fruits de saison et riz. Sucré-salé en harmonie parfaite.', tags: ['ragoût', 'fruits', 'criollo'], origen: 'Plat métis combinant influences indigènes et espagnoles.',
+          ingredientes: ['500g bœuf en dés', '2 épis de maïs en rondelles', '2 pommes de terre', '2 patates douces', '2 pêches', '1 tasse riz', '1 oignon', '2 tomates', '1 bouillon de bœuf', 'sel, poivre, origan'],
+          preparacion: ['Saisir le bœuf dans l\'huile chaude. Retirer.', 'Dans la même casserole, faire revenir oignon et tomate.', 'Ajouter bouillon, bœuf et légumes durs.', 'Cuire 20 min, ajouter riz et fruits.', 'Cuire 15 min de plus jusqu\'à tendreté.', 'Rectifier l\'assaisonnement et servir bien chaud.'] },
+        { emoji: '🧆', nombre: 'Tamales du Nord', descripcion: 'Pâte de maïs farcie de viande épicée, enveloppée dans des feuilles de maïs et bouillie.', tags: ['maïs', 'viande', 'bouilli'], origen: 'Tradition préhispanique adoptée par la culture criolla.',
+          ingredientes: ['500g farine de maïs précuite', '200g saindoux', 'bouillon qsp', '400g porc haché', '2 oignons', 'piment rouge, cumin, paprika', 'feuilles de maïs pour envelopper'],
+          preparacion: ['Tremper les feuilles de maïs dans eau chaude.', 'Mélanger farine de maïs avec saindoux et bouillon jusqu\'à pâte malléable.', 'Farce : sofrito oignon, porc, piment et épices.', 'Étaler pâte sur feuille, mettre farce au centre, fermer.', 'Attacher et bouillir 1 heure à feu doux.', 'Servir chauds, ouvrir à table.'] },
+        { emoji: '🥘', nombre: 'Chanfaina Santiaguine', descripcion: 'Ragoût d\'abats de chevreau avec pommes de terre et épices. Plat de campagne intense et réconfortant.', tags: ['abats', 'chevreau', 'ragoût'], origen: 'Tradition rurale, préparée au moment de l\'abattage.',
+          ingredientes: ['1kg abats de chevreau (foie, rognons, cœur)', '4 pommes de terre', '2 oignons', '3 gousses d\'ail', 'paprika, cumin, origan', 'vin blanc', 'huile, sel'],
+          preparacion: ['Nettoyer et couper les abats en petits morceaux.', 'Faire revenir ail et oignon dans l\'huile chaude.', 'Incorporer les abats et saisir à feu vif.', 'Ajouter pommes de terre en dés et vin.', 'Assaisonner et cuire couvert 30 minutes.', 'Découvrir et réduire la sauce. Servir avec pain maison.'] },
+        { emoji: '🍮', nombre: 'Arrope de Figue de Barbarie', descripcion: 'Confiture épaisse au fruit du cactus, rouge intense, saveur unique des terres arides.', tags: ['confiture', 'cactus', 'dessert'], origen: 'Héritage des peuples originaires de la région du Chaco.',
+          ingredientes: ['3kg figues de barbarie mûres épluchées', '500g sucre', '1 citron (jus)', 'zeste d\'orange optionnel'],
+          preparacion: ['Laver et éplucher les figues avec soin (fines épines).', 'Mixer ou écraser jusqu\'à obtenir du jus.', 'Filtrer pour enlever les graines.', 'Cuire le jus avec le sucre à feu doux.', 'Remuer constamment 1-2 heures jusqu\'à épaississement.', 'Ajouter jus de citron en fin. Mettre en bocaux chaud.'] },
+        { emoji: '🍞', nombre: 'Pain de Braises', descripcion: 'Pain rustique cuit directement dans les braises et cendres chaudes. Croûte croustillante, intérieur tendre.', tags: ['pain', 'braises', 'campagne'], origen: 'Pain des muletiers et gauchos dans leurs campements.',
+          ingredientes: ['500g farine', '1 cc sel', '1 cc levure sèche', '1 cs saindoux', 'eau tiède qsp'],
+          preparacion: ['Mélanger farine, sel et levure. Incorporer saindoux.', 'Ajouter eau tiède peu à peu jusqu\'à pâte molle.', 'Laisser lever 30 minutes couvert.', 'Former un disque épais (4cm de hauteur).', 'Faire des braises et couvrir de cendres chaudes.', 'Enterrer le pain dans les cendres 20 min par face.', 'Frapper pour enlever les cendres et servir.'] },
+        { emoji: '🍵', nombre: 'Api de Maïs Violet', descripcion: 'Boisson chaude épaisse de maïs violet, cannelle et orange. Nutritive et aromatique, idéale pour le froid.', tags: ['boisson', 'maïs', 'chaud'], origen: 'Boisson andine partagée avec la Bolivie et le nord argentin.',
+          ingredientes: ['200g maïs violet sec', '2 litres eau', '2 bâtons de cannelle', '4 clous de girofle', 'zeste d\'orange', 'sucre au goût', 'jus de citron'],
+          preparacion: ['Bouillir le maïs violet avec cannelle, clous et zeste d\'orange 1 heure.', 'Filtrer et remettre le liquide sur le feu.', 'Ajouter sucre au goût.', 'Dissoudre 2 cs de fécule dans eau froide et ajouter en remuant.', 'Cuire jusqu\'à légère épaississement.', 'Servir chaud avec quelques gouttes de citron.'] }
+    ],
+    pt: [
+        { emoji: '🫕', nombre: 'Locro Santiaguino', descripcion: 'Ensopado espesso de milho, feijão e carnes que aquece nos dias frios.', tags: ['ensopado', 'inverno', 'milho'], origen: 'Prato emblema do noroeste argentino, de origem pré-hispânica.',
+          ingredientes: ['500g milho branco triturado', '300g feijão', '300g bucho', '300g carne de porco', '200g linguiça colorada', '1 cebola grande', '2 ceboletes', '1 col chá páprica', 'sal e cominho a gosto'],
+          preparacion: ['Deixar milho e feijão de molho na véspera.', 'Ferver o milho 2 horas em fogo baixo.', 'Adicionar feijão e cozinhar mais 30 min.', 'Incorporar todas as carnes em cubos.', 'Preparar refogado de cebola, páprica e cominho, adicionar ao ensopado.', 'Cozinhar em fogo baixo mais 1 hora até engrossar.', 'Servir com cebolinha picada e pimenta.'] },
+        { emoji: '🥟', nombre: 'Empanadas Santiaguinas', descripcion: 'Recheadas com carne picada na faca, batata, ovo e especiarias. Reconhecidas pela sua borda franzida.', tags: ['assadas', 'carne', 'tradicional'], origen: 'Cada família santiaguina tem sua própria receita secreta.',
+          ingredientes: ['500g farinha', '100g banha de porco', '1 col chá sal', 'água morna qb', '400g carne bovina picada na faca', '2 batatas médias', '2 ovos cozidos', '2 cebolas', '1 col chá cominho', '1 col chá páprica doce', 'pimenta a gosto'],
+          preparacion: ['Fazer a massa misturando farinha, banha e sal. Adicionar água morna até obter massa lisa. Descansar 30 min.', 'Para o recheio: refogar cebola, adicionar carne e cozinhar. Incorporar batata cozida em cubos, especiarias e ovo picado. Resfriar.', 'Abrir a massa, cortar discos de 12cm.', 'Rechear e fechar com a dobra característica (14 pregas).', 'Assar a 220°C por 15-18 minutos até dourar.'] },
+        { emoji: '🍖', nombre: 'Cabrito no Espeto', descripcion: 'Cabrito inteiro assado na cruz sobre brasas por horas — pele crocante, carne suculenta.', tags: ['assado', 'cabrito', 'grelha'], origen: 'Tradição gaúcha da região, indispensável nas festividades.',
+          ingredientes: ['1 cabrito inteiro (8-10kg)', 'sal grosso', 'alho', 'limão', 'chimichurri: salsinha, alho, orégano, vinagre, azeite'],
+          preparacion: ['Limpar o cabrito e abri-lo em borboleta.', 'Esfregar com sal grosso, alho amassado e limão.', 'Colocar no espeto cruzado.', 'Cozinhar sobre brasas lentas (sem chama) por 3-4 horas.', 'Girar ocasionalmente para cozimento uniforme.', 'Servir com chimichurri e salada criolla.'] },
+        { emoji: '🌽', nombre: 'Humita em Palha', descripcion: 'Pasta de milho fresco com queijo e especiarias, enrolada nas próprias palhas do milho e cozida.', tags: ['milho', 'vegetariano', 'cozido'], origen: 'Receita de origem quechua, presente em toda a região andina.',
+          ingredientes: ['8 espigas de milho fresco com palhas', '200g queijo fresco ralado', '2 cebolas', '1 col sopa manteiga', '1 col chá páprica', 'sal e açúcar a gosto', 'manjericão fresco'],
+          preparacion: ['Retirar as palhas com cuidado e reservar.', 'Ralar finamente os grãos de milho.', 'Refogar cebola na manteiga até transparente.', 'Misturar milho, cebola, queijo, páprica e manjericão.', 'Colocar 2 col sopa da mistura em cada palha, fechar como trouxinha.', 'Amarrar com tiras de palha e cozinhar em água salgada 30 minutos.'] },
+        { emoji: '🍲', nombre: 'Carbonada Criolla', descripcion: 'Ensopado de carne com legumes, frutas da estação e arroz. Doce e salgado em perfeita harmonia.', tags: ['ensopado', 'frutas', 'criollo'], origen: 'Prato mestiço que combina influências indígenas e espanholas.',
+          ingredientes: ['500g carne bovina em cubos', '2 espigas de milho em rodelas', '2 batatas', '2 batatas-doces', '2 pêssegos', '1 xícara arroz', '1 cebola', '2 tomates', '1 caldo de carne', 'sal, pimenta, orégano'],
+          preparacion: ['Selar a carne em óleo quente. Retirar.', 'Na mesma panela, refogar cebola e tomate.', 'Adicionar caldo, carne e legumes duros.', 'Cozinhar 20 minutos, adicionar arroz e frutas.', 'Cozinhar mais 15 minutos até tudo macio.', 'Ajustar temperos e servir bem quente.'] },
+        { emoji: '🧆', nombre: 'Tamales do Norte', descripcion: 'Massa de milho recheada com carne temperada, enrolada em palhas de milho e cozida.', tags: ['milho', 'carne', 'cozido'], origen: 'Tradição pré-hispânica adotada pela cultura criolla.',
+          ingredientes: ['500g fubá pré-cozido', '200g banha de porco', 'caldo qb', '400g carne de porco moída', '2 cebolas', 'pimenta vermelha, cominho, páprica', 'palhas de milho para embrulhar'],
+          preparacion: ['Hidratar as palhas em água quente.', 'Misturar fubá com banha e caldo até massa maleável.', 'Recheio: refogado de cebola, carne, pimenta e especiarias.', 'Espalhar massa na palha, colocar recheio no centro, fechar.', 'Amarrar com tiras e cozinhar 1 hora em fogo baixo.', 'Servir quentes, abrir na mesa.'] },
+        { emoji: '🥘', nombre: 'Chanfaina Santiaguina', descripcion: 'Ensopado de miúdos de cabrito com batatas e especiarias. Prato rural intenso e reconfortante.', tags: ['miúdos', 'cabrito', 'ensopado'], origen: 'Tradição rural, preparada no momento do abate.',
+          ingredientes: ['1kg miúdos de cabrito (fígado, rins, coração)', '4 batatas', '2 cebolas', '3 dentes de alho', 'páprica, cominho, orégano', 'vinho branco', 'azeite, sal'],
+          preparacion: ['Limpar e cortar os miúdos em pedaços pequenos.', 'Refogar alho e cebola em azeite quente.', 'Incorporar os miúdos e selar em fogo alto.', 'Adicionar batatas em cubos e vinho.', 'Temperar e cozinhar tampado 30 minutos.', 'Descobrir e reduzir o molho. Servir com pão caseiro.'] },
+        { emoji: '🍮', nombre: 'Arrope de Tuna', descripcion: 'Doce espesso do fruto do cacto, cor vermelha intensa e sabor único do sertão.', tags: ['doce', 'tuna', 'sobremesa'], origen: 'Herança dos povos originários da região do Chaco.',
+          ingredientes: ['3kg tunas maduras descascadas', '500g açúcar', '1 limão (suco)', 'casca de laranja opcional'],
+          preparacion: ['Lavar e descascar as tunas com cuidado (têm espinhos finos).', 'Liquidificar ou amassar até obter suco.', 'Coar para retirar sementes.', 'Cozinhar o suco com açúcar em fogo baixo.', 'Mexer constantemente por 1-2 horas até engrossar.', 'Adicionar suco de limão no final. Envasar quente.'] },
+        { emoji: '🍞', nombre: 'Pão de Brasa', descripcion: 'Pão rústico cozido diretamente nas brasas e cinzas quentes. Casca crocante, interior macio.', tags: ['pão', 'brasas', 'campo'], origen: 'Pão dos tropeiros e gaúchos nos acampamentos.',
+          ingredientes: ['500g farinha de trigo', '1 col chá sal', '1 col chá fermento seco', '1 col sopa banha', 'água morna qb'],
+          preparacion: ['Misturar farinha, sal e fermento. Incorporar banha.', 'Adicionar água morna aos poucos até massa mole.', 'Deixar crescer 30 minutos coberto.', 'Dar formato de disco grosso (4cm de altura).', 'Fazer brasas e cobrir com cinzas quentes.', 'Enterrar o pão nas cinzas 20 minutos por lado.', 'Bater para tirar as cinzas e servir.'] },
+        { emoji: '🍵', nombre: 'Api de Milho Roxo', descripcion: 'Bebida quente espessa de milho roxo, canela e laranja. Nutritiva e aromática, ideal para o frio.', tags: ['bebida', 'milho', 'quente'], origen: 'Bebida andina compartilhada com a Bolívia e o norte argentino.',
+          ingredientes: ['200g milho roxo seco', '2 litros água', '2 paus de canela', '4 cravos', 'casca de laranja', 'açúcar a gosto', 'suco de limão'],
+          preparacion: ['Ferver o milho roxo com canela, cravos e casca de laranja por 1 hora.', 'Coar e voltar o líquido ao fogo.', 'Adicionar açúcar a gosto.', 'Dissolver 2 col sopa amido em água fria e adicionar mexendo.', 'Cozinhar até engrossar levemente.', 'Servir quente com algumas gotas de limão.'] }
+    ],
+    de: [
+        { emoji: '🫕', nombre: 'Santiaguinisches Locro', descripcion: 'Dicker Eintopf aus Mais, Bohnen und Fleisch, der an kalten Tagen wärmt.', tags: ['eintopf', 'winter', 'mais'], origen: 'Emblematisches Gericht des nordwestlichen Argentiniens, präkolumbianischen Ursprungs.',
+          ingredientes: ['500g zerstoßener weißer Mais', '300g Bohnen', '300g Kutteln', '300g Schweinefleisch', '200g Chorizo', '1 große Zwiebel', '2 Frühlingszwiebeln', '1 TL Paprika', 'Salz und Kreuzkümmel nach Geschmack'],
+          preparacion: ['Mais und Bohnen über Nacht einweichen.', 'Mais 2 Stunden auf kleiner Flamme kochen.', 'Bohnen hinzufügen und 30 min weiterkochen.', 'Alle Fleischstücke in Würfeln hinzufügen.', 'Sofrito aus Zwiebel, Paprika und Kreuzkümmel zubereiten und zum Eintopf geben.', '1 weitere Stunde auf kleiner Flamme kochen bis er eindickt.', 'Mit gehackter Frühlingszwiebel und Chili servieren.'] },
+        { emoji: '🥟', nombre: 'Santiaguinische Empanadas', descripcion: 'Gefüllt mit von Hand gehacktem Rindfleisch, Kartoffel, Ei und Gewürzen. Erkennbar an ihrer charakteristischen Falte.', tags: ['gebacken', 'rindfleisch', 'traditionell'], origen: 'Jede Familie aus Santiago hat ihr eigenes Geheimrezept.',
+          ingredientes: ['500g Mehl', '100g Schmalz', '1 TL Salz', 'lauwarmes Wasser nach Bedarf', '400g von Hand gehacktes Rindfleisch', '2 mittelgroße Kartoffeln', '2 hart gekochte Eier', '2 Zwiebeln', '1 TL Kreuzkümmel', '1 TL süßer Paprika', 'Chili nach Geschmack'],
+          preparacion: ['Teig aus Mehl, Schmalz und Salz herstellen. Lauwarmes Wasser hinzufügen bis glatter Teig entsteht. 30 Min ruhen lassen.', 'Füllung: Zwiebel anbraten, Fleisch hinzufügen und garen. Gewürfelte gekochte Kartoffeln, Gewürze und gehacktes Ei einarbeiten. Abkühlen lassen.', 'Teig ausrollen, 12cm-Kreise ausstechen.', 'Füllen und mit der charakteristischen Falte (14 Falten) verschließen.', 'Bei 220°C 15-18 Minuten backen bis goldbraun.'] },
+        { emoji: '🍖', nombre: 'Ziegenbock am Spieß', descripcion: 'Ganzer Ziegenbock stundenlang am Kreuzspieß über Kohlen gebraten — knusprige Haut, saftiges Fleisch.', tags: ['braten', 'ziege', 'grill'], origen: 'Gaucho-Tradition der Region, bei Festen unverzichtbar.',
+          ingredientes: ['1 ganzer Ziegenbock (8-10kg)', 'grobes Salz', 'Knoblauch', 'Zitrone', 'Chimichurri: Petersilie, Knoblauch, Oregano, Essig, Öl'],
+          preparacion: ['Ziegenbock reinigen und wie ein Schmetterling aufklappen.', 'Mit grobem Salz, zerstoßenem Knoblauch und Zitronensaft einreiben.', 'Am Kreuzspieß aufspießen.', 'Über langsamen Kohleglut (keine Flamme) 3-4 Stunden garen.', 'Gelegentlich wenden für gleichmäßiges Garen.', 'Mit Chimichurri und Criolla-Salat servieren.'] },
+        { emoji: '🌽', nombre: 'Humita in Maisblättern', descripcion: 'Frischer Maisbrei mit Käse und Gewürzen, in Maisblätter gewickelt und gekocht.', tags: ['mais', 'vegetarisch', 'gekocht'], origen: 'Rezept quechuanischen Ursprungs, in der gesamten Andenregion verbreitet.',
+          ingredientes: ['8 frische Maiskolben mit Blättern', '200g geriebener Frischkäse', '2 Zwiebeln', '1 EL Butter', '1 TL Paprika', 'Salz und Zucker nach Geschmack', 'frisches Basilikum'],
+          preparacion: ['Maisblätter vorsichtig ablösen und aufbewahren.', 'Maiskörner fein reiben.', 'Zwiebel in Butter glasig dünsten.', 'Mais, Zwiebel, Käse, Paprika und Basilikum mischen.', 'Je 2 EL Mischung auf jedes Blatt geben, wie ein Päckchen schließen.', 'Mit Blattstreifen binden und in Salzwasser 30 Minuten kochen.'] },
+        { emoji: '🍲', nombre: 'Criolla Carbonada', descripcion: 'Rindereintopf mit Gemüse, Saisonfrüchten und Reis. Süß und salzig in perfekter Harmonie.', tags: ['eintopf', 'früchte', 'criollo'], origen: 'Mestizogericht, das indigene und spanische Einflüsse kombiniert.',
+          ingredientes: ['500g Rindfleisch in Würfeln', '2 Maiskolben in Scheiben', '2 Kartoffeln', '2 Süßkartoffeln', '2 Pfirsiche', '1 Tasse Reis', '1 Zwiebel', '2 Tomaten', '1 Rinderbrühe', 'Salz, Pfeffer, Oregano'],
+          preparacion: ['Fleisch in heißem Öl anbraten. Herausnehmen.', 'Im gleichen Topf Zwiebel und Tomate anbraten.', 'Brühe, Fleisch und hartes Gemüse hinzufügen.', '20 Minuten kochen, Reis und Früchte hinzufügen.', '15 Minuten weiterkochen bis alles weich ist.', 'Würzen und sehr heiß servieren.'] },
+        { emoji: '🧆', nombre: 'Nordargetinische Tamales', descripcion: 'Maismasse gefüllt mit gewürztem Fleisch, in Maisblätter gewickelt und gekocht.', tags: ['mais', 'fleisch', 'gekocht'], origen: 'Präkolumbianische Tradition, von der criollos Kultur übernommen.',
+          ingredientes: ['500g vorgekochtes Maismehl', '200g Schmalz', 'Brühe nach Bedarf', '400g gehacktes Schweinefleisch', '2 Zwiebeln', 'roter Chili, Kreuzkümmel, Paprika', 'Maisblätter zum Einwickeln'],
+          preparacion: ['Maisblätter in heißem Wasser einweichen.', 'Maismehl mit Schmalz und Brühe zu formbarem Teig mischen.', 'Füllung: Sofrito aus Zwiebel, Fleisch, Chili und Gewürzen.', 'Teig auf Blatt verteilen, Füllung in die Mitte, schließen.', 'Binden und 1 Stunde auf kleiner Flamme kochen.', 'Heiß servieren, am Tisch öffnen.'] },
+        { emoji: '🥘', nombre: 'Santiaguinische Chanfaina', descripcion: 'Ziegeninnereien-Eintopf mit Kartoffeln und Gewürzen. Intensives und wohltuendes Landhausgericht.', tags: ['innereien', 'ziege', 'eintopf'], origen: 'Ländliche Tradition, beim Schlachten des Tieres zubereitet.',
+          ingredientes: ['1kg Ziegeninnereien (Leber, Nieren, Herz)', '4 Kartoffeln', '2 Zwiebeln', '3 Knoblauchzehen', 'Paprika, Kreuzkümmel, Oregano', 'Weißwein', 'Öl, Salz'],
+          preparacion: ['Innereien reinigen und in kleine Stücke schneiden.', 'Knoblauch und Zwiebel in heißem Öl anbraten.', 'Innereien hinzufügen und auf hoher Hitze anbraten.', 'Gewürfelte Kartoffeln und Wein hinzufügen.', 'Würzen und zugedeckt 30 Minuten kochen.', 'Aufdecken und Sauce einreduzieren. Mit Hausbrot servieren.'] },
+        { emoji: '🍮', nombre: 'Kaktusfeigen-Arrope', descripcion: 'Dicke Süßspeise aus der Kaktusfeige, intensiv rot, einzigartiger Geschmack aus dem Buschland.', tags: ['süß', 'kaktus', 'nachtisch'], origen: 'Erbe der Ureinwohner der Santiago-Chaco-Region.',
+          ingredientes: ['3kg reife geschälte Kaktusfeigen', '500g Zucker', '1 Zitrone (Saft)', 'Orangenschale optional'],
+          preparacion: ['Kaktusfeigen vorsichtig waschen und schälen (feine Dornen).', 'Mixen oder zerdrücken bis Saft entsteht.', 'Abseihen um Kerne zu entfernen.', 'Saft mit Zucker auf kleiner Flamme kochen.', 'Ständig 1-2 Stunden rühren bis er eindickt.', 'Zitronensaft am Ende hinzufügen. Heiß abfüllen.'] },
+        { emoji: '🍞', nombre: 'Aschenbrot', descripcion: 'Rustikales Brot direkt in heißen Glut und Asche gebacken. Knusprige Kruste, zartes Inneres.', tags: ['brot', 'glut', 'land'], origen: 'Brot der Viehtreiber und Gauchos in ihren Lagern.',
+          ingredientes: ['500g Weizenmehl', '1 TL Salz', '1 TL Trockenhefe', '1 EL Schmalz', 'lauwarmes Wasser nach Bedarf'],
+          preparacion: ['Mehl, Salz und Hefe mischen. Schmalz einarbeiten.', 'Lauwarmes Wasser nach und nach bis weicher Teig entsteht hinzufügen.', 'Zugedeckt 30 Minuten gehen lassen.', 'Als dicke Scheibe formen (4cm Höhe).', 'Glut machen und mit heißer Asche bedecken.', 'Brot 20 Minuten pro Seite in der Asche vergraben.', 'Asche abklopfen und servieren.'] },
+        { emoji: '🍵', nombre: 'Lila Mais Api', descripcion: 'Heiße dicke Maisdrink mit lila Mais, Zimt und Orange. Nahrhaft und aromatisch, ideal für kalte Tage.', tags: ['getränk', 'mais', 'heiß'], origen: 'Andengetränk, geteilt mit Bolivien und dem argentinischen Norden.',
+          ingredientes: ['200g getrockneter lila Mais', '2 Liter Wasser', '2 Zimtstangen', '4 Gewürznelken', 'Orangenschale', 'Zucker nach Geschmack', 'Zitronensaft'],
+          preparacion: ['Lila Mais mit Zimt, Nelken und Orangenschale 1 Stunde kochen.', 'Abseihen und Flüssigkeit wieder erhitzen.', 'Zucker nach Geschmack hinzufügen.', '2 EL Stärke in kaltem Wasser auflösen und rührend hinzufügen.', 'Kochen bis leicht eingedickt.', 'Heiß mit einigen Tropfen Zitrone servieren.'] }
+    ]
+};
+
+let _langActual = 'es';
+let _recetaActual = null;
+
+function cambiarIdioma(lang) {
+    _langActual = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('activo', b.dataset.lang === lang));
+    const ui = _ui[lang];
+    document.getElementById('hdr-titulo').textContent = ui.titulo;
+    document.getElementById('hdr-subtitulo').textContent = ui.subtitulo;
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('grid-recetas');
+    const recetas = _recetas[_langActual];
+    const ui = _ui[_langActual];
+    grid.innerHTML = recetas.map((r, i) => `
+        <div class="tarjeta" onclick="verReceta(${i})">
+            <span class="emoji">${r.emoji}</span>
+            <h2>${r.nombre}</h2>
+            <p class="descripcion">${r.descripcion}</p>
+            <div class="tags">${r.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+            <button class="btn-ver">${ui.ver} →</button>
+        </div>
+    `).join('');
+}
+
+function verReceta(idx) {
+    const r = _recetas[_langActual][idx];
+    const ui = _ui[_langActual];
+    const modal = document.getElementById('modal-contenido');
+    modal.innerHTML = `
+        <span class="emoji-grande">${r.emoji}</span>
+        <h2>${r.nombre}</h2>
+        <p class="origen">${r.origen}</p>
+        <h3>${ui.ingredientes}</h3>
+        <ul>${r.ingredientes.map(i => `<li>${i}</li>`).join('')}</ul>
+        <h3>${ui.preparacion}</h3>
+        <ol>${r.preparacion.map(p => `<li>${p}</li>`).join('')}</ol>
+        <button class="btn-cerrar" onclick="cerrarModal()">${ui.cerrar}</button>
+    `;
+    document.getElementById('overlay').classList.add('activo');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal(e) {
+    if (!e || e.target === document.getElementById('overlay') || e.target.classList.contains('btn-cerrar')) {
+        document.getElementById('overlay').classList.remove('activo');
+        document.body.style.overflow = '';
+    }
+}
+
+renderGrid();
+</script>
+</body>
+</html>
